@@ -19,16 +19,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const DEFAULT_CATALOG_SERVICES: { name: string; price: number; category?: string }[] = [
-  { name: 'Initial Consultation', price: 150.00, category: 'General' },
-  { name: 'Teeth Cleaning & Scaling', price: 350.00, category: 'Preventive' },
-  { name: 'Composite Dental Filling', price: 400.00, category: 'Restorative' },
-  { name: 'Tooth Extraction (Simple)', price: 500.00, category: 'Surgical' },
-  { name: 'Root Canal Therapy', price: 1200.00, category: 'Endodontics' },
-  { name: 'Porcelain Crown Placement', price: 1800.00, category: 'Prosthodontics' },
-  { name: 'Professional Teeth Whitening', price: 800.00, category: 'Cosmetic' },
-  { name: 'Dental X-Ray (Panoramic)', price: 250.00, category: 'Diagnostic' },
-];
 
 const SAMPLE_PATIENT_OPTIONS = [
   { id: 'p1', firstName: 'John', lastName: 'Mensah', patientId: 'PAT-0001', phone: '+233 24 123 4567', email: 'john.mensah@gmail.com' },
@@ -52,7 +42,7 @@ export default function CreateInvoice() {
   const { services: dbServices, addService } = useServices();
   const { addInvoice } = useInvoices();
   
-  const [catalogServices, setCatalogServices] = useState<{ name: string; price: number; category?: string }[]>(DEFAULT_CATALOG_SERVICES);
+  const [catalogServices, setCatalogServices] = useState<{ name: string; price: number; category?: string }[]>([]);
   
   const [patientId, setPatientId] = useState(urlPatientId);
   const [invoiceNumber] = useState(`INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
@@ -77,12 +67,8 @@ export default function CreateInvoice() {
   const clinicId = userData?.clinicId || 'demo-clinic';
 
   useEffect(() => {
-    if (dbServices && dbServices.length > 0) {
-      // Merge custom database services with defaults
-      const merged = [...dbServices, ...DEFAULT_CATALOG_SERVICES.filter(d => !dbServices.some(s => s.name === d.name))];
-      setCatalogServices(merged);
-    } else {
-      setCatalogServices(DEFAULT_CATALOG_SERVICES);
+    if (dbServices) {
+      setCatalogServices(dbServices);
     }
   }, [dbServices]);
 

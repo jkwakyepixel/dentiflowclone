@@ -22,23 +22,14 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const DEFAULT_SERVICES: (ClinicService & { id: string })[] = [
-  { id: 's1', clinicId: 'demo-clinic', name: 'Initial Consultation', price: 150.00, category: 'General', description: 'Comprehensive oral examination and diagnosis' },
-  { id: 's2', clinicId: 'demo-clinic', name: 'Teeth Cleaning & Scaling', price: 350.00, category: 'Preventive', description: 'Ultrasonic calculus removal and polish' },
-  { id: 's3', clinicId: 'demo-clinic', name: 'Composite Dental Filling', price: 400.00, category: 'Restorative', description: 'Tooth-colored resin restoration per surface' },
-  { id: 's4', clinicId: 'demo-clinic', name: 'Tooth Extraction (Simple)', price: 500.00, category: 'Surgical', description: 'Routine extraction with local anesthesia' },
-  { id: 's5', clinicId: 'demo-clinic', name: 'Root Canal Therapy', price: 1200.00, category: 'Endodontics', description: 'Complete canal debridement and obturation' },
-  { id: 's6', clinicId: 'demo-clinic', name: 'Porcelain Crown Placement', price: 1800.00, category: 'Prosthodontics', description: 'Full coverage ceramic crown' },
-  { id: 's7', clinicId: 'demo-clinic', name: 'Professional Teeth Whitening', price: 800.00, category: 'Cosmetic', description: 'In-office light-activated bleaching' },
-  { id: 's8', clinicId: 'demo-clinic', name: 'Dental X-Ray (Panoramic)', price: 250.00, category: 'Diagnostic', description: 'Full jaw OPG imaging' },
-];
+
 
 export default function Settings() {
   const { userData } = useAuth();
   const { clinicProfile, updateClinicProfile } = useClinic();
   
   const [activeTab, setActiveTab] = useState<'clinic' | 'services' | 'team'>('clinic');
-  const { services, loading, addService, editService } = useServices();
+  const { services, loading, addService, editService, removeService } = useServices();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { users, loading: usersLoading, updateUserRole, addUser } = useUsers();
@@ -226,6 +217,17 @@ export default function Settings() {
       toast.error('Failed to save service');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this service?')) {
+      try {
+        await removeService(id);
+        toast.success('Service deleted successfully');
+      } catch (err) {
+        toast.error('Failed to delete service');
+      }
     }
   };
 
@@ -472,6 +474,13 @@ export default function Settings() {
                           className="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
                         >
                           <Edit3 size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteService(service.id!)}
+                          title="Delete Service"
+                          className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </td>
                     </tr>
