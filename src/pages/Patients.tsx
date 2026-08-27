@@ -247,7 +247,7 @@ export default function Patients() {
                             <CalendarIcon size={15} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(patient.id, `${patient.firstName} ${patient.lastName}`)}
+                            onClick={() => handleDelete(patient.id as string, `${patient.firstName} ${patient.lastName}`)}
                             title="Delete Patient"
                             className="text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors ml-1"
                           >
