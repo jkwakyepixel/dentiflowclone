@@ -20,7 +20,8 @@ import {
   Eye,
   AlertCircle,
   Building2,
-  MessageSquare
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 import { 
   format, 
@@ -61,7 +62,7 @@ export default function Appointments() {
   const urlPatientId = searchParams.get('patientId');
   const urlBook = searchParams.get('book');
 
-  const { appointments, loading: apptsLoading, addAppointment } = useAppointments();
+  const { appointments, loading: apptsLoading, addAppointment, removeAppointment } = useAppointments();
   const { patients, loading: patientsLoading, addPatient } = usePatients();
   const loading = apptsLoading || patientsLoading;
   
@@ -164,6 +165,18 @@ export default function Appointments() {
       toast.error(error.message || 'Failed to create appointment');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAppointment = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this appointment? This action cannot be undone.')) {
+      try {
+        await removeAppointment(id);
+        toast.success('Appointment deleted successfully');
+        setSelectedAppt(null);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete appointment');
+      }
     }
   };
 
@@ -278,7 +291,7 @@ export default function Appointments() {
       case 'Confirmed':
         return 'bg-emerald-50/95 border-emerald-500 text-emerald-950 hover:bg-emerald-100/90';
       case 'Scheduled':
-        return 'bg-amber-50/95 border-amber-500 text-amber-950 hover:bg-amber-100/90';
+        return 'bg-blue-50/95 border-blue-500 text-blue-950 hover:bg-blue-100/90';
       case 'Cancelled':
       case 'No Show':
         return 'bg-red-50/95 border-red-500 text-red-950 hover:bg-red-100/90';
@@ -677,7 +690,7 @@ export default function Appointments() {
                         item.status === 'Confirmed'
                           ? 'bg-emerald-50 text-emerald-600'
                           : item.status === 'Scheduled'
-                          ? 'bg-amber-50 text-amber-600'
+                          ? 'bg-blue-50 text-blue-600'
                           : 'bg-red-50 text-red-600'
                       }`}>
                         {item.status}
@@ -697,7 +710,7 @@ export default function Appointments() {
             <span className="text-[11px] font-medium text-slate-600">Confirmed</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
             <span className="text-[11px] font-medium text-slate-600">Scheduled</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -998,6 +1011,71 @@ export default function Appointments() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Appointment Details & Actions Modal */}
+      {selectedAppt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-900">Appointment Details</h3>
+              <button onClick={() => setSelectedAppt(null)} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4 text-xs">
+              <div>
+                <p className="text-slate-400 font-medium">Patient</p>
+                <p className="font-bold text-slate-900 text-sm mt-0.5">{selectedAppt.patientName}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-slate-400 font-medium">Date</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">{selectedAppt.date}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium">Time</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">{selectedAppt.startTime} - {selectedAppt.endTime}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium">Treatment</p>
+                  <p className="font-semibold text-slate-800 mt-0.5">{selectedAppt.appointmentType}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium">Status</p>
+                  <span className={`inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    selectedAppt.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-600' :
+                    selectedAppt.status === 'Scheduled' ? 'bg-blue-50 text-blue-600' :
+                    'bg-red-50 text-red-600'
+                  }`}>
+                    {selectedAppt.status}
+                  </span>
+                </div>
+              </div>
+              {selectedAppt.notes && (
+                <div>
+                  <p className="text-slate-400 font-medium">Notes</p>
+                  <p className="text-slate-700 mt-0.5 bg-slate-50 p-2 rounded-lg">{selectedAppt.notes}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+              <button
+                onClick={() => handleDeleteAppointment(selectedAppt.id as string)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedAppt(null)}
+                className="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
