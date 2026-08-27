@@ -56,6 +56,13 @@ export default function Login() {
           createdAt: new Date().toISOString(),
           displayName: userCredential.user.displayName || ''
         });
+      } else {
+        const data = userDoc.data();
+        if (data.clinicId === 'demo-clinic') {
+          await setDoc(userDocRef, {
+            clinicId: `clinic_${userCredential.user.uid}`
+          }, { merge: true });
+        }
       }
       
       toast.success('Successfully logged in with Google');

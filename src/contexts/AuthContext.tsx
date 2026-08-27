@@ -35,10 +35,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
+            let finalClinicId = data.clinicId || 'demo-clinic';
+            
+            // Auto-migrate old test accounts away from the shared demo-clinic
+            if (finalClinicId === 'demo-clinic') {
+              finalClinicId = `clinic_${user.uid}`;
+              try {
+                const { updateDoc } = await import('firebase/firestore');
+                await updateDoc(doc(db, 'users', user.uid), { clinicId: finalClinicId });
+              } catch (err) {
+                console.error("Migration failed:", err);
+              }
+            }
+
             setUserData({ 
               id: userDoc.id, 
-              clinicId: data.clinicId || 'demo-clinic',
-              ...data 
+              ...data,
+              clinicId: finalClinicId,
             } as User);
           } else {
             console.error("User document not found in Firestore");
