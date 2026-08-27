@@ -20,7 +20,7 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
     clinicId: 'demo-clinic',
     patientId: 'p-1',
     patientName: 'Samuel Tetteh',
-    dentist: 'Dr. Luxe Dental Clinic',
+    dentist: 'Dr. SmileDesk',
     room: 'Surgery Room 1',
     scheduledTime: '1:00 PM\n1:30 PM',
     arrivalTime: '',
@@ -34,7 +34,7 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
     clinicId: 'demo-clinic',
     patientId: 'p-2',
     patientName: 'Comfort Anku',
-    dentist: 'Dr. Luxe Dental Clinic',
+    dentist: 'Dr. SmileDesk',
     room: 'Surgery Room 1',
     scheduledTime: '1:30 PM\n2:00 PM',
     arrivalTime: '01:21 pm',
@@ -48,7 +48,7 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
     clinicId: 'demo-clinic',
     patientId: 'p-3',
     patientName: 'Mr Dennis Kyei',
-    dentist: 'Dr. Luxe Dental Clinic',
+    dentist: 'Dr. SmileDesk',
     room: 'Surgery Room 1',
     scheduledTime: '2:00 PM\n2:30 PM',
     arrivalTime: '',
@@ -62,7 +62,7 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
     clinicId: 'demo-clinic',
     patientId: 'p-4',
     patientName: 'Mr Shalom A',
-    dentist: 'Dr. Luxe Dental Clinic',
+    dentist: 'Dr. SmileDesk',
     room: 'Surgery Room 1',
     scheduledTime: '2:00 PM\n3:00 PM',
     arrivalTime: '02:08 pm',
@@ -85,7 +85,7 @@ export default function Admissions() {
   // Quick Admit Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [patientNameInput, setPatientNameInput] = useState('');
-  const [dentistInput, setDentistInput] = useState('Dr. Luxe Dental Clinic');
+  const [dentistInput, setDentistInput] = useState('Dr. SmileDesk');
   const [roomInput, setRoomInput] = useState('Surgery Room 1');
   const [startTimeInput, setStartTimeInput] = useState('2:30 PM');
   const [endTimeInput, setEndTimeInput] = useState('3:00 PM');

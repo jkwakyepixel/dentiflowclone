@@ -78,7 +78,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (clinicProfile.name) {
       document.title = `${clinicProfile.name} - Clinic Management`;
     } else {
-      document.title = 'Luxe Dental Clinic';
+      document.title = 'SmileDesk';
     }
 
     const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
