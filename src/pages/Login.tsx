@@ -70,22 +70,17 @@ export default function Login() {
   return (
     <div className="min-h-screen flex font-sans">
       {/* Left Panel - Image Background */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden flex-col">
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[#0a2916] overflow-hidden flex-col">
         {/* Background Image with Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-50 transition-opacity duration-1000"
           style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1606811841689-23dfddce3e95?q=80&w=1470&auto=format&fit=crop")' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a8a]/80 via-[#1e3a8a]/60 to-[#0f172a]/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f3d20]/80 via-[#0f3d20]/60 to-[#05140b]/95" />
         
         {/* Logo */}
         <div className="relative z-10 p-10 flex items-center gap-3">
-          <div className="bg-white text-blue-600 p-2 rounded-xl shadow-lg">
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 21c-2 0-3-2-3-4s-1-4-3-4-3 2-3 4 1 5 3 5c1 0 2-1 2-2 1-2 2-2 3-2h2c1 0 2 0 3 2 0 1 1 2 2 2 2 0 3-3 3-5s-1-4-3-4-3 2-3 4-1 4-3 4z" />
-            </svg>
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">Luxe Dental Clinic</span>
+          <img src="/logo.png" alt="Luxe Dental Clinic" className="h-16 object-contain" />
         </div>
 
         {/* Bottom Text */}
@@ -93,7 +88,7 @@ export default function Login() {
           <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight leading-tight">
             Gentle care for <br />every smile.
           </h1>
-          <p className="text-blue-100/80 text-lg max-w-md leading-relaxed font-medium">
+          <p className="text-[#F3E5AB] text-lg max-w-md leading-relaxed font-medium">
             Appointments, patients, invoices and payments — everything your reception team needs, in one clean workspace.
           </p>
         </div>
@@ -125,7 +120,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-[#EEF2FF] border border-transparent rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-colors sm:text-sm font-medium"
+                  className="block w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f3d20] focus:border-transparent transition-colors sm:text-sm font-medium shadow-sm"
                   placeholder="jonathankwakye27@gmail.com"
                 />
               </div>
@@ -146,7 +141,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-11 py-3 bg-[#EEF2FF] border border-transparent rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-colors sm:text-sm font-medium"
+                  className="block w-full pl-11 pr-11 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f3d20] focus:border-transparent transition-colors sm:text-sm font-medium shadow-sm"
                   placeholder="••••••••"
                 />
                 <button
@@ -170,14 +165,14 @@ export default function Login() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+                    className="h-4 w-4 rounded border-slate-300 text-[#0f3d20] focus:ring-[#0f3d20]"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-500 font-medium">
                     Remember me
                   </label>
                 </div>
                 <div className="text-sm">
-                  <a href="#" className="font-semibold text-blue-600 hover:text-blue-500">
+                  <a href="#" className="font-semibold text-[#0f3d20] hover:text-[#185e32]">
                     Forgot password?
                   </a>
                 </div>
@@ -187,7 +182,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#1D4ED8] hover:bg-[#1e40af] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 transition-colors mt-2"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#0f3d20] hover:bg-[#185e32] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0f3d20] disabled:opacity-50 transition-colors mt-2"
             >
               {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
             </button>
@@ -214,7 +209,7 @@ export default function Login() {
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="flex w-full justify-center items-center gap-3 rounded-xl border border-slate-200 bg-white py-3 px-4 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 transition-colors"
+                className="flex w-full justify-center items-center gap-3 rounded-xl border border-slate-200 bg-white py-3 px-4 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0f3d20] focus:ring-offset-2 disabled:opacity-50 transition-colors"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -234,7 +229,7 @@ export default function Login() {
             </span>
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="font-bold text-blue-600 hover:text-blue-700 transition-colors ml-1"
+              className="font-bold text-[#0f3d20] hover:text-[#185e32] transition-colors ml-1"
             >
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
