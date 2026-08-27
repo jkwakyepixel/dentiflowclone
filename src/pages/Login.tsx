@@ -23,7 +23,7 @@ export default function Login() {
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           email: userCredential.user.email,
           role: 'admin',
-          clinicId: 'demo-clinic',
+          clinicId: `clinic_${userCredential.user.uid}`,
           createdAt: new Date().toISOString()
         });
         toast.success('Account created successfully');
@@ -52,7 +52,7 @@ export default function Login() {
         await setDoc(userDocRef, {
           email: userCredential.user.email,
           role: 'admin',
-          clinicId: 'demo-clinic',
+          clinicId: `clinic_${userCredential.user.uid}`,
           createdAt: new Date().toISOString(),
           displayName: userCredential.user.displayName || ''
         });
