@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to get the user's clinicId (assuming we store it in their token via custom claims, or they can only read/write documents where clinicId matches their user doc)
+    // For simplicity, we will ensure they can only read/write if they provide a clinicId that matches their own user record.
+    function getUserClinicId() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clinicId;
+    }
+
+    // Function to check if the document belongs to the user's clinic
+    function isSameClinic(clinicId) {
+      return isAuthenticated() && clinicId == getUserClinicId();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // User can read their own document
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      // Allow initial creation (might need an admin or cloud function in reality, but allowing for setup)
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Patients collection
+    match /patients/{patientId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Invoices collection
+    match /invoices/{invoiceId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Payments collection
+    match /payments/{paymentId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+    
+    // Services collection
+    match /services/{serviceId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // AuditLogs collection
+    match /auditLogs/{logId} {
+      // Users can only create logs for their clinic, and read logs for their clinic
+      allow read: if isSameClinic(resource.data.clinicId);
+      allow create: if isSameClinic(request.resource.data.clinicId);
+      // Logs should be immutable
+      allow update, delete: if false;
+    }
+  }
+}
