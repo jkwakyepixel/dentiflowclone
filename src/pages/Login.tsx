@@ -73,8 +73,8 @@ export default function Login() {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center text-primary font-bold text-3xl items-center gap-2 mb-6">
-          <span className="bg-primary text-white p-2 rounded-lg">D</span>
-          Dentiflow
+          <span className="bg-primary text-white p-2 rounded-lg">L</span>
+          Luxe Dental
         </div>
         <h2 className="mt-2 text-center text-2xl font-bold tracking-tight text-slate-900">
           {isSignUp ? 'Create your account' : 'Sign in to your clinic'}
