@@ -154,16 +154,26 @@ export default function Settings() {
     toast.success('Logo removed. Click "Save Clinic Profile" to apply.');
   };
 
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
   const handleSaveClinicProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateClinicProfile({
-      name: clinicName.trim() || 'Bright Smile Dental Clinic',
-      phone: clinicPhone.trim(),
-      email: clinicEmail.trim(),
-      address: clinicAddress.trim(),
-      logo: logoPreview,
-      currency
-    });
+    setIsSavingProfile(true);
+    try {
+      await updateClinicProfile({
+        name: clinicName.trim() || 'Bright Smile Dental Clinic',
+        phone: clinicPhone.trim(),
+        email: clinicEmail.trim(),
+        address: clinicAddress.trim(),
+        logo: logoPreview,
+        currency
+      });
+      toast.success('Clinic profile updated successfully');
+    } catch (err) {
+      toast.error('Failed to update clinic profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleOpenAdd = () => {
@@ -394,9 +404,11 @@ export default function Settings() {
               <div className="pt-3 flex justify-end border-t border-slate-100">
                 <button
                   type="submit"
-                  className="bg-[#2563eb] hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-colors"
+                  disabled={isSavingProfile}
+                  className="bg-[#2563eb] hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
-                  Save Clinic Profile
+                  {isSavingProfile && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  {isSavingProfile ? 'Saving Profile...' : 'Save Clinic Profile'}
                 </button>
               </div>
             </div>
@@ -801,8 +813,9 @@ export default function Settings() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-2"
                 >
+                  {saving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                   {saving ? 'Saving...' : 'Save Service'}
                 </button>
               </div>

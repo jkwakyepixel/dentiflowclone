@@ -263,10 +263,14 @@ export default function CreateInvoice() {
             type="button"
             onClick={() => handleSave(balanceDue === 0 && grandTotal > 0 ? 'Paid' : 'Unpaid')}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors disabled:opacity-50"
           >
-            <Check size={16} />
-            <span>Create Invoice</span>
+            {isSubmitting ? (
+              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Check size={16} />
+            )}
+            <span>{isSubmitting ? 'Creating...' : 'Create Invoice'}</span>
           </button>
         </div>
       </div>
@@ -668,8 +672,9 @@ export default function CreateInvoice() {
                 <button
                   type="submit"
                   disabled={savingService}
-                  className="px-4 py-2 font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50"
+                  className="px-4 py-2 font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs disabled:opacity-50 flex items-center gap-2"
                 >
+                  {savingService && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                   {savingService ? 'Saving...' : 'Save & Add to Invoice'}
                 </button>
               </div>

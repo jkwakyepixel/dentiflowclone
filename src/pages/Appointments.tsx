@@ -931,9 +931,10 @@ export default function Appointments() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-[#0284c7] hover:bg-sky-700 text-white text-xs font-bold px-5 py-2 rounded-xl shadow-xs transition-colors uppercase disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
-                  {saving ? 'CREATING...' : 'CREATE'}
+                  {saving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  {saving ? 'Scheduling...' : 'Schedule Appointment'}
                 </button>
               </div>
             </form>
