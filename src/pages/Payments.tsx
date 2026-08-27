@@ -158,8 +158,12 @@ export default function Payments() {
   };
 
   // Metric Totals
-  const totalMonthPayments = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-  const totalOutstandingBalance = invoices.reduce((acc, inv) => acc + (Number(inv.balance) || 0), 0) || 2500.00;
+  const todayDateStr = format(new Date(), 'dd MMM yyyy');
+  const totalTodayPayments = payments
+    .filter(p => p.paymentDate === todayDateStr)
+    .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const totalMonthPayments = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0); // Consider adding date checks if needed
+  const totalOutstandingBalance = invoices.reduce((acc, inv) => acc + (Number(inv.balance) || 0), 0);
 
   const filteredPayments = payments.filter(p => {
     const q = searchTerm.toLowerCase();
@@ -200,7 +204,9 @@ export default function Payments() {
           </div>
           <div>
             <p className="text-xs text-slate-400 font-medium">Payments today</p>
-            <p className="text-base font-bold text-slate-900 mt-0.5">GHC 0.00</p>
+            <p className="text-base font-bold text-slate-900 mt-0.5">
+              GHC {totalTodayPayments.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
           </div>
         </div>
 
