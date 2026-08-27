@@ -40,6 +40,9 @@ export interface Patient {
   patientId: string;
   firstName: string;
   lastName: string;
+  middleName?: string;
+  salutation?: string;
+  recommendedBy?: string;
   phone: string;
   email?: string;
   dateOfBirth: string;

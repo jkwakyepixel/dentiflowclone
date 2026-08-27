@@ -9,7 +9,12 @@ import {
   FileText, 
   Calendar as CalendarIcon, 
   X,
-  Trash2
+  Trash2,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  ClipboardList
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,8 +27,11 @@ export default function Patients() {
   const [genderFilter, setGenderFilter] = useState('All genders');
 
   // New Patient Form State
+  const [salutation, setSalutation] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [recommendedBy, setRecommendedBy] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -42,8 +50,11 @@ export default function Patients() {
 
     try {
       await addPatient({
+        salutation,
         firstName,
         lastName,
+        middleName,
+        recommendedBy,
         phone,
         email,
         dateOfBirth,
@@ -64,8 +75,11 @@ export default function Patients() {
       setIsModalOpen(false);
       
       // Reset form
+      setSalutation('');
       setFirstName(''); 
       setLastName(''); 
+      setMiddleName('');
+      setRecommendedBy('');
       setPhone(''); 
       setEmail(''); 
       setDateOfBirth('');
@@ -352,168 +366,131 @@ export default function Patients() {
       {/* Add New Patient Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h2 className="text-sm font-bold text-slate-900">Add New Patient</h2>
+          <div className="bg-[#f4f6f8] rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="px-6 py-4 bg-[#1a73e8] flex items-center justify-between sticky top-0 z-10 rounded-t-xl">
+              <h2 className="text-base font-medium text-white tracking-wide">Add Patient</h2>
               <button 
                 onClick={() => setIsModalOpen(false)} 
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
-              <div>
-                <h3 className="font-bold text-slate-900 mb-3">Personal Information</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">First Name *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={firstName} 
-                      onChange={e => setFirstName(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+            <form onSubmit={handleSubmit} className="p-8 space-y-8 text-sm">
+              {/* Row 1: Salutation, First Name, Last Name */}
+              <div className="flex gap-4 items-start">
+                <div className="mt-3 text-blue-600"><User size={20} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-1">
+                  <div className="relative">
+                    <input type="text" value={salutation} onChange={e => setSalutation(e.target.value)} placeholder="Salutation" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Last Name *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={lastName} 
-                      onChange={e => setLastName(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+                  <div className="relative">
+                    <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name *" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Phone *</label>
-                    <input 
-                      type="tel" 
-                      required 
-                      placeholder="+233..."
-                      value={phone} 
-                      onChange={e => setPhone(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+                  <div className="relative">
+                    <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name *" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Email</label>
-                    <input 
-                      type="email" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Date of Birth</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 14 Mar"
-                      value={dateOfBirth} 
-                      onChange={e => setDateOfBirth(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Gender</label>
-                    <select 
-                      value={gender} 
-                      onChange={e => setGender(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
-                    >
-                      <option>Male</option>
-                      <option>Female</option>
-                      <option>Other</option>
+                </div>
+              </div>
+
+              {/* Row 2: Gender, Middle Name, Recommended By */}
+              <div className="flex gap-4 items-start">
+                <div className="mt-3 text-slate-500"><FileText size={20} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-1">
+                  <div className="relative">
+                    <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 text-slate-700 appearance-none cursor-pointer">
+                      <option value="" disabled hidden>Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
-                  <div className="sm:col-span-2">
-                    <label className="block font-medium text-slate-700 mb-1">Address</label>
-                    <input 
-                      type="text" 
-                      value={address} 
-                      onChange={e => setAddress(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+                  <div className="relative">
+                    <input type="text" value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="Middle Name" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
+                    <input type="text" value={recommendedBy} onChange={e => setRecommendedBy(e.target.value)} placeholder="Recommended By" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
-                <h3 className="font-bold text-slate-900 mb-3">Emergency Contact</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Name</label>
-                    <input 
-                      type="text" 
-                      value={emergencyName} 
-                      onChange={e => setEmergencyName(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+              {/* Row 3: Phone, DOB */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="flex gap-4 items-start">
+                  <div className="mt-3 text-slate-500"><Phone size={20} /></div>
+                  <div className="flex-1 relative">
+                    <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone Number *" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Phone</label>
-                    <input 
-                      type="tel" 
-                      value={emergencyPhone} 
-                      onChange={e => setEmergencyPhone(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Relationship</label>
-                    <input 
-                      type="text" 
-                      value={emergencyRel} 
-                      onChange={e => setEmergencyRel(e.target.value)} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="mt-3 text-slate-500"><CalendarIcon size={20} /></div>
+                  <div className="flex-1 relative">
+                    <input type="text" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} placeholder="Date of Birth" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
-                <h3 className="font-bold text-slate-900 mb-3">Medical Information</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Allergies</label>
-                    <input 
-                      type="text" 
-                      value={allergies} 
-                      onChange={e => setAllergies(e.target.value)} 
-                      placeholder="e.g. Penicillin, Latex, None" 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+              {/* Row 4: Email */}
+              <div className="flex gap-4 items-start">
+                <div className="mt-3 text-slate-500"><Mail size={20} /></div>
+                <div className="flex-1 relative">
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                </div>
+              </div>
+
+              {/* Row 5: Address */}
+              <div className="flex gap-4 items-start">
+                <div className="mt-3 text-slate-500"><MapPin size={20} /></div>
+                <div className="flex-1 relative">
+                  <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                </div>
+              </div>
+
+              {/* Row 6: Clinic Note */}
+              <div className="flex gap-4 items-start">
+                <div className="mt-3 text-slate-500"><ClipboardList size={20} /></div>
+                <div className="flex-1 relative">
+                  <input type="text" value={medicalNotes} onChange={e => setMedicalNotes(e.target.value)} placeholder="Clinic Note" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                </div>
+              </div>
+              
+              {/* Other Fields (Hidden in screenshot but necessary) */}
+              <div className="pt-8 mt-4 border-t border-slate-200/60">
+                <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">Additional Information</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="relative">
+                    <input type="text" value={allergies} onChange={e => setAllergies(e.target.value)} placeholder="Allergies (e.g. Penicillin, Latex)" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Medical Notes</label>
-                    <textarea 
-                      value={medicalNotes} 
-                      onChange={e => setMedicalNotes(e.target.value)} 
-                      rows={2}
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
+                  <div className="relative">
+                    <input type="text" value={emergencyName} onChange={e => setEmergencyName(e.target.value)} placeholder="Emergency Contact Name" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
+                    <input type="text" value={emergencyPhone} onChange={e => setEmergencyPhone(e.target.value)} placeholder="Emergency Contact Phone" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                  </div>
+                  <div className="relative">
+                    <input type="text" value={emergencyRel} onChange={e => setEmergencyRel(e.target.value)} placeholder="Emergency Contact Relationship" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              {/* Footer */}
+              <div className="pt-4 flex items-center justify-end gap-3 mt-8">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 text-xs font-bold text-white bg-[#0ea5e9] hover:bg-[#0284c7] rounded-md transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 tracking-wide"
                 >
-                  {saving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  {saving ? 'Saving...' : 'Save Patient'}
+                  {saving && <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  CREATE
                 </button>
               </div>
             </form>
