@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClinic } from '../contexts/ClinicContext';
 import { fetchById, fetchForClinic, createDoc, updateDocument, logAudit } from '../services/db';
@@ -25,7 +25,7 @@ export default function PatientDetail() {
 
   const { patients, editPatient, loading: patientsLoading } = usePatients();
   const { appointments } = useAppointments();
-  const { invoices } = useInvoices();
+  const { invoices, removeInvoice } = useInvoices();
   const { payments } = usePayments();
   
   const patient = patients.find(p => p.id === id);
@@ -37,6 +37,15 @@ export default function PatientDetail() {
   
   // Tab state preserving the classic view + new tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'payments'>('overview');
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    if (tab === 'notes' || tab === 'treatment' || tab === 'appointments' || tab === 'invoices' || tab === 'payments') {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   // Treatment Plans State
   const { plans: treatmentPlans, addPlan, editPlan, removePlan } = useTreatmentPlans(patient?.id || id);
@@ -55,8 +64,9 @@ export default function PatientDetail() {
   const [opStatus, setOpStatus] = useState<'TBD' | 'In Progress' | 'Done'>('TBD');
 
   // Notes State
-  const { notes: notesList, addNote } = useClinicalNotes(patient?.id || id);
+  const { notes: notesList, addNote, editNote, removeNote } = useClinicalNotes(patient?.id || id);
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteCategory, setNoteCategory] = useState<'Procedure Note' | 'Diagnosis' | 'Follow-up' | 'General'>('Procedure Note');
@@ -188,20 +198,49 @@ export default function PatientDetail() {
     if (!noteTitle.trim() || !noteContent.trim()) return;
 
     try {
-      await addNote({
-        title: noteTitle.trim(),
-        patientId: patient?.id || id || 'unknown',
-        content: noteContent.trim(),
-        category: noteCategory,
-        dentist: userData?.name || 'Clinic Staff',
-        date: format(new Date(), 'dd MMM yyyy')
-      });
+      if (editingNoteId) {
+        await editNote(editingNoteId, {
+          title: noteTitle.trim(),
+          content: noteContent.trim(),
+          category: noteCategory
+        });
+        toast.success('Clinical note updated');
+      } else {
+        await addNote({
+          title: noteTitle.trim(),
+          patientId: patient?.id || id || 'unknown',
+          content: noteContent.trim(),
+          category: noteCategory,
+          dentist: userData?.name || 'Clinic Staff',
+          date: format(new Date(), 'dd MMM yyyy')
+        });
+        toast.success('Clinical note recorded');
+      }
       setIsAddNoteModalOpen(false);
+      setEditingNoteId(null);
       setNoteTitle('');
       setNoteContent('');
-      toast.success('Clinical note recorded');
     } catch (error) {
-      toast.error('Failed to record clinical note');
+      toast.error(editingNoteId ? 'Failed to update note' : 'Failed to record clinical note');
+    }
+  };
+
+  const handleEditNote = (note: ClinicalNote) => {
+    setEditingNoteId(note.id as string);
+    setNoteTitle(note.title);
+    setNoteContent(note.content);
+    setNoteCategory(note.category as any);
+    setIsAddNoteModalOpen(true);
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (window.confirm('Are you sure you want to delete this note?')) {
+      try {
+        await removeNote(noteId);
+        toast.success('Note deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete note');
+      }
     }
   };
 
@@ -728,7 +767,12 @@ export default function PatientDetail() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900">Clinical & Doctor Notes</h3>
             <button
-              onClick={() => setIsAddNoteModalOpen(true)}
+              onClick={() => {
+                setEditingNoteId(null);
+                setNoteTitle('');
+                setNoteContent('');
+                setIsAddNoteModalOpen(true);
+              }}
               className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors"
             >
               <Plus size={15} />
@@ -746,7 +790,25 @@ export default function PatientDetail() {
                     </span>
                     <h4 className="font-bold text-slate-900 text-xs">{note.title}</h4>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">{note.date} · {note.dentist}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[11px] text-slate-400 font-medium">{note.date} · {note.dentist}</span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleEditNote(note)}
+                        className="text-slate-400 hover:text-blue-600 p-1 rounded-md hover:bg-blue-50 transition-colors"
+                        title="Edit Note"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteNote(note.id as string)}
+                        className="text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors"
+                        title="Delete Note"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
@@ -819,11 +881,52 @@ export default function PatientDetail() {
                     <p className="font-bold font-mono text-slate-900">{invoice.invoiceNumber}</p>
                     <p className="text-slate-400">{invoice.invoiceDate || invoice.dueDate} · {invoice.status}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-slate-900">GH₵ {(invoice.total || 0).toFixed(2)}</p>
-                    {(invoice.balance || 0) > 0 && (
-                      <span className="text-amber-600 text-[10px] font-semibold">Balance: GH₵ {(invoice.balance || 0).toFixed(2)}</span>
-                    )}
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <p className="font-bold text-slate-900">GH₵ {(invoice.total || 0).toFixed(2)}</p>
+                      {(invoice.balance || 0) > 0 && (
+                        <span className="text-amber-600 text-[10px] font-semibold">Balance: GH₵ {(invoice.balance || 0).toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <button
+                        onClick={() => navigate(`/invoices/create?edit=${invoice.id}`)}
+                        title="Edit Invoice"
+                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-indigo-50 transition-colors"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const p = patient || patients.find(p => p.id === invoice.patientId || p.patientId === invoice.patientId);
+                          if (p?.email) {
+                            window.location.href = `mailto:${p.email}?subject=Invoice%20${invoice.invoiceNumber}&body=Please%20find%20attached%20your%20invoice.`;
+                          } else {
+                            toast.error('Patient email not found');
+                          }
+                        }}
+                        title="Email Invoice"
+                        className="text-slate-400 hover:text-amber-600 p-1 rounded hover:bg-amber-50 transition-colors"
+                      >
+                        <Mail size={14} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm('Are you sure you want to delete this invoice?')) {
+                            try {
+                              await removeInvoice(invoice.id as string);
+                              toast.success('Invoice deleted');
+                            } catch (e) {
+                              toast.error('Failed to delete invoice');
+                            }
+                          }
+                        }}
+                        title="Delete Invoice"
+                        className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))

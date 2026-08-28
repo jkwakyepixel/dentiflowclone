@@ -37,15 +37,16 @@ export default function CreateInvoice() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlPatientId = searchParams.get('patientId') || '';
+  const editInvoiceId = searchParams.get('edit');
 
   const { patients } = usePatients();
   const { services: dbServices, addService } = useServices();
-  const { addInvoice } = useInvoices();
+  const { invoices, addInvoice, editInvoice } = useInvoices();
   
   const [catalogServices, setCatalogServices] = useState<{ name: string; price: number; category?: string }[]>([]);
   
   const [patientId, setPatientId] = useState(urlPatientId);
-  const [invoiceNumber] = useState(`INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
+  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
   const [invoiceDate, setInvoiceDate] = useState('2026-08-26');
   const [dueDate, setDueDate] = useState('2026-09-09');
   
@@ -65,6 +66,23 @@ export default function CreateInvoice() {
   const [savingService, setSavingService] = useState(false);
 
   const clinicId = userData?.clinicId || 'demo-clinic';
+
+  // Fetch edit data
+  useEffect(() => {
+    if (editInvoiceId && invoices.length > 0) {
+      const invToEdit = invoices.find(i => i.id === editInvoiceId);
+      if (invToEdit) {
+        setPatientId(invToEdit.patientId || '');
+        setInvoiceNumber(invToEdit.invoiceNumber || '');
+        setInvoiceDate(invToEdit.invoiceDate || '');
+        setDueDate(invToEdit.dueDate || '');
+        setItems(invToEdit.items || []);
+        setDiscount(invToEdit.discount || 0);
+        setTax(invToEdit.tax || 0);
+        setAmountPaid(invToEdit.amountPaid || 0);
+      }
+    }
+  }, [editInvoiceId, invoices]);
 
   useEffect(() => {
     if (dbServices) {
@@ -197,7 +215,7 @@ export default function CreateInvoice() {
     
     setIsSubmitting(true);
     try {
-      await addInvoice({
+      const invoiceData = {
         patientId: selectedPatient.id || 'p-gen',
         patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
         invoiceDate,
@@ -205,10 +223,18 @@ export default function CreateInvoice() {
         items: items.length > 0 ? items : [{ id: '1', serviceName: 'Dental Care', description: '', quantity: 1, unitPrice: grandTotal, total: grandTotal }],
         discount: numDiscount,
         tax: numTax,
+        amountPaid: numPaid,
         status
-      });
+      };
+
+      if (editInvoiceId) {
+        await editInvoice(editInvoiceId, invoiceData);
+        toast.success(`Invoice ${status === 'Draft' ? 'draft saved' : 'updated'} successfully`);
+      } else {
+        await addInvoice(invoiceData as any);
+        toast.success(`Invoice ${status === 'Draft' ? 'draft saved' : 'created'} successfully`);
+      }
       
-      toast.success(`Invoice ${status === 'Draft' ? 'draft saved' : 'created'} successfully`);
       navigate('/invoices');
     } catch (error) {
       toast.error('Failed to create invoice');
@@ -233,7 +259,7 @@ export default function CreateInvoice() {
       {/* Header Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Invoice</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{editInvoiceId ? 'Edit Invoice' : 'Create Invoice'}</h1>
           <p className="text-xs text-slate-400 font-mono mt-0.5">Invoice number {invoiceNumber}</p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -256,7 +282,7 @@ export default function CreateInvoice() {
             ) : (
               <Check size={16} />
             )}
-            <span>{isSubmitting ? 'Creating...' : 'Create Invoice'}</span>
+            <span>{isSubmitting ? 'Saving...' : (editInvoiceId ? 'Update Invoice' : 'Create Invoice')}</span>
           </button>
         </div>
       </div>

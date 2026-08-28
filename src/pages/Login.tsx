@@ -133,7 +133,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-11 pr-4 py-3 bg-[#EEF2FF] border border-transparent rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-colors sm:text-sm font-medium"
-                  placeholder="jonathankwakye27@gmail.com"
+                  placeholder="name@example.com"
                 />
               </div>
             </div>
@@ -199,12 +199,6 @@ export default function Login() {
               {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Sign Up' : 'Sign In')}
             </button>
           </form>
-          
-          {!isSignUp && (
-            <p className="mt-5 text-center text-[13px] text-slate-400 font-medium">
-              Demo mode — use any email and password to sign in.
-            </p>
-          )}
 
           <div className="mt-8">
             <div className="relative">

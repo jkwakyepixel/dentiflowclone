@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useAppointments } from '../hooks/useAppointments';
 import { useAdmissions } from '../hooks/useAdmissions';
 import type { Admission } from '../types';
@@ -76,8 +77,9 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
 
 export default function Admissions() {
   const { userData } = useAuth();
+  const navigate = useNavigate();
   const { admissions: dbAdmissions, addAdmission, editAdmission } = useAdmissions();
-  const { appointments: dbAppts } = useAppointments();
+  const { appointments: dbAppts, editAppointment } = useAppointments();
   
   const [admissions, setAdmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,33 +98,43 @@ export default function Admissions() {
   const todayDateStr = format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
-    // Filter admissions for today
+    // Filter manual admissions for today
     const todayAdmissions = dbAdmissions.filter((a: any) => !a.date || a.date === todayDateStr);
 
-    if (todayAdmissions.length === 0 && dbAppts.length > 0) {
-      // populate into admissions from appointments for today if no actual admissions exist yet
-      const todayAppts = dbAppts.filter(a => a.date === todayDateStr);
-      if (todayAppts.length > 0) {
-        const mappedAppts = todayAppts.map((a, idx) => ({
-          id: a.id || `app-adm-${idx}`,
-          clinicId,
-          patientId: a.patientId,
-          patientName: a.patientName,
-          dentist: a.dentist.startsWith('Dr.') ? a.dentist : `Dr. ${a.dentist}`,
-          room: (a as any).room || 'Surgery Room 1',
-          scheduledTime: `${a.startTime}\n${a.endTime}`,
-          arrivalTime: a.status === 'Confirmed' ? a.startTime : '',
-          status: a.status === 'Confirmed' ? 'In Session' : a.status === 'Completed' ? 'Ended' : 'Waiting',
-          notes: a.status === 'Confirmed' ? `Arrived: ${a.startTime}` : a.notes || 'Scheduled',
-          date: todayDateStr
-        }));
-        setAdmissions(mappedAppts);
-      } else {
-        setAdmissions(todayAdmissions);
-      }
-    } else {
-      setAdmissions(todayAdmissions);
-    }
+    // Filter appointments for today
+    const todayAppts = dbAppts.filter(a => a.date === todayDateStr);
+    const mappedAppts = todayAppts.map((a, idx) => {
+      const isConfirmed = a.status === 'Confirmed';
+      const isCompleted = a.status === 'Completed';
+      const isCanceled = a.status === 'Cancelled';
+      const isNoShow = a.status === 'No Show';
+      const isArrived = a.status === 'Arrived';
+      const isScheduled = a.status === 'Scheduled';
+      
+      let mappedStatus = 'Scheduled';
+      if (isArrived) mappedStatus = 'Waiting';
+      else if (isConfirmed) mappedStatus = 'In Session';
+      else if (isCompleted) mappedStatus = 'Ended';
+      else if (isCanceled) mappedStatus = 'Canceled';
+      else if (isNoShow) mappedStatus = 'No Show';
+
+      return {
+        id: a.id || `app-adm-${idx}`,
+        clinicId,
+        patientId: a.patientId,
+        patientName: a.patientName,
+        dentist: a.dentist.startsWith('Dr.') ? a.dentist : `Dr. ${a.dentist}`,
+        room: (a as any).room || 'Surgery Room 1',
+        scheduledTime: `${a.startTime}\n${a.endTime}`,
+        arrivalTime: isConfirmed ? a.startTime : '',
+        status: mappedStatus,
+        notes: isConfirmed ? `Arrived: ${a.startTime}` : a.notes || 'Scheduled',
+        date: todayDateStr,
+        isAppointment: true
+      };
+    });
+
+    setAdmissions([...todayAdmissions, ...mappedAppts]);
   }, [dbAdmissions, dbAppts, clinicId, todayDateStr]);
 
   // Status Metrics Calculation
@@ -132,7 +144,37 @@ export default function Admissions() {
   const noShowCount = admissions.filter(a => a.status === 'No Show').length;
   const canceledCount = admissions.filter(a => a.status === 'Canceled').length;
   const endedCount = admissions.filter(a => a.status === 'Ended').length;
+  const scheduledCount = admissions.filter(a => a.status === 'Scheduled').length;
   const totalCount = admissions.length;
+
+  const handleMarkArrived = async (item: any) => {
+    try {
+      const updated = admissions.map(a => {
+        if (a.id === item.id) {
+          return {
+            ...a,
+            status: 'Waiting',
+            arrivalTime: format(new Date(), 'hh:mm a'),
+            notes: 'Waiting in lobby'
+          };
+        }
+        return a;
+      });
+      setAdmissions(updated);
+      toast.success(`Marked ${item.patientName} as Arrived`);
+
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'Arrived' });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+        await editAdmission(item.id, {
+          status: 'Waiting',
+          arrivalTime: format(new Date(), 'hh:mm a')
+        });
+      }
+    } catch (e) {
+      toast.error('Failed to update status');
+    }
+  };
 
   const handleCallIn = async (item: any) => {
     try {
@@ -150,7 +192,9 @@ export default function Admissions() {
       setAdmissions(updated);
       toast.success(`${item.patientName} admitted to ${item.room || 'Surgery Room 1'}`);
 
-      if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'Confirmed' });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
         await editAdmission(item.id, {
           status: 'In Session',
           sessionStartTimestamp: Date.now()
@@ -175,7 +219,9 @@ export default function Admissions() {
       setAdmissions(updated);
       toast.success(`Session for ${item.patientName} ended`);
 
-      if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'Completed' });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
         await editAdmission(item.id, {
           status: 'Ended'
         });
@@ -196,7 +242,9 @@ export default function Admissions() {
       setAdmissions(updated);
       toast.success(`${item.patientName}'s admission canceled`);
 
-      if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'Cancelled' });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
         await editAdmission(item.id, { status: 'Canceled' });
       }
     } catch (e) {
@@ -215,7 +263,9 @@ export default function Admissions() {
       setAdmissions(updated);
       toast.success(`Marked ${item.patientName} as No Show`);
 
-      if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'No Show' });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
         await editAdmission(item.id, { status: 'No Show' });
       }
     } catch (e) {
@@ -280,8 +330,13 @@ export default function Admissions() {
       <div className="bg-white rounded-2xl p-7 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-7">
         <h2 className="text-sm font-bold text-slate-900">Live Waiting Room View</h2>
 
-        {/* 7 Metric Stats Bar */}
-        <div className="grid grid-cols-7 text-center gap-2">
+        {/* 8 Metric Stats Bar */}
+        <div className="grid grid-cols-8 text-center gap-2">
+          <div>
+            <p className="text-xl font-bold text-[#0284c7]">{scheduledCount}</p>
+            <p className="text-[11px] text-slate-500 font-medium mt-1">Scheduled</p>
+          </div>
+
           <div>
             <p className="text-xl font-bold text-[#0284c7]">{inSessionCount}</p>
             <p className="text-[11px] text-slate-500 font-medium mt-1">In Session</p>
@@ -347,6 +402,7 @@ export default function Admissions() {
             const isInSession = item.status === 'In Session';
             const isEnded = item.status === 'Ended';
             const isWaiting = item.status === 'Waiting';
+            const isScheduled = item.status === 'Scheduled';
             const isCanceled = item.status === 'Canceled';
             const isNoShow = item.status === 'No Show';
 
@@ -398,6 +454,11 @@ export default function Admissions() {
                       {item.notes || (item.arrivalTime ? `Arrived: ${item.arrivalTime}` : 'Ended')}
                     </span>
                   )}
+                  {isScheduled && (
+                    <span className="text-blue-500 whitespace-nowrap text-xs">
+                      Scheduled (Not Arrived)
+                    </span>
+                  )}
                   {isWaiting && (
                     <span className="text-amber-600 whitespace-nowrap text-xs">
                       Waiting in lobby
@@ -419,6 +480,13 @@ export default function Admissions() {
                 <div className="w-48 lg:w-52 flex-shrink-0 flex items-center justify-end gap-2 text-right">
                   {/* Notepad outline icon */}
                   <button
+                    onClick={() => {
+                      if (item.patientId && item.patientId !== 'p-gen') {
+                        navigate(`/patients/${item.patientId}?tab=notes`);
+                      } else {
+                        toast.error('Cannot view notes for unregistered patient');
+                      }
+                    }}
                     title="Clinical Notes"
                     className="text-slate-300 hover:text-slate-600 p-1 rounded transition-colors"
                   >
@@ -442,6 +510,23 @@ export default function Admissions() {
                     <span className="text-slate-400 font-normal text-xs pr-1">
                       {item.status}
                     </span>
+                  ) : isScheduled ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCancel(item)}
+                        title="Cancel Admission"
+                        className="text-[10px] font-semibold text-slate-400 hover:text-slate-600 border border-transparent hover:border-slate-200 hover:bg-slate-50 px-1.5 py-0.5 rounded transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleMarkArrived(item)}
+                        title="Mark as Arrived"
+                        className="text-[10px] font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-all ml-1"
+                      >
+                        Arrived
+                      </button>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <button
@@ -576,8 +661,9 @@ export default function Admissions() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-[#0284c7] hover:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg shadow-xs disabled:opacity-50"
+                  className="bg-[#0284c7] hover:bg-sky-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
+                  {saving && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                   {saving ? 'Adding...' : 'Add Patient'}
                 </button>
               </div>

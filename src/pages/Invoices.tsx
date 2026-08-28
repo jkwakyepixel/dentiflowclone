@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClinic } from '../contexts/ClinicContext';
 import { useInvoices } from '../hooks/useInvoices';
@@ -15,7 +15,10 @@ import {
   Check, 
   Download, 
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Edit2,
+  Trash2,
+  Mail
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -23,7 +26,8 @@ export default function Invoices() {
   const { userData } = useAuth();
   const { clinicProfile } = useClinic();
   
-  const { invoices, loading: invoicesLoading } = useInvoices();
+  const navigate = useNavigate();
+  const { invoices, removeInvoice, loading: invoicesLoading } = useInvoices();
   const { patients, loading: patientsLoading } = usePatients();
   const loading = invoicesLoading || patientsLoading;
   
@@ -222,11 +226,48 @@ export default function Invoices() {
                           <Eye size={15} />
                         </button>
                         <button
+                          onClick={() => navigate(`/invoices/create?edit=${invoice.id}`)}
+                          title="Edit Invoice"
+                          className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const p = patients.find(p => p.id === invoice.patientId || p.patientId === invoice.patientId);
+                            if (p?.email) {
+                              window.location.href = `mailto:${p.email}?subject=Invoice%20${invoice.invoiceNumber}&body=Please%20find%20attached%20your%20invoice.`;
+                            } else {
+                              toast.error('Patient email not found');
+                            }
+                          }}
+                          title="Email Invoice"
+                          className="text-slate-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-amber-50 transition-colors"
+                        >
+                          <Mail size={15} />
+                        </button>
+                        <button
                           onClick={() => handlePrint(invoice)}
                           title="Print Invoice"
                           className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                         >
                           <Printer size={15} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (window.confirm('Are you sure you want to delete this invoice?')) {
+                              try {
+                                await removeInvoice(invoice.id as string);
+                                toast.success('Invoice deleted');
+                              } catch (e) {
+                                toast.error('Failed to delete invoice');
+                              }
+                            }
+                          }}
+                          title="Delete Invoice"
+                          className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>

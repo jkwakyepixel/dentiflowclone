@@ -82,7 +82,7 @@ export interface Appointment {
   room?: string;
   duration?: number;
   notes: string;
-  status: 'Scheduled' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show';
+  status: 'Scheduled' | 'Arrived' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show';
   createdAt?: any;
   updatedAt?: any;
   createdBy?: string;
@@ -201,7 +201,7 @@ export interface Admission {
   room: string;
   scheduledTime: string;
   arrivalTime?: string;
-  status: 'Waiting' | 'In Session' | 'Late' | 'No Show' | 'Canceled' | 'Ended';
+  status: 'Scheduled' | 'Waiting' | 'In Session' | 'Late' | 'No Show' | 'Canceled' | 'Ended';
   sessionStartTimestamp?: number;
   notes?: string;
   createdAt?: any;

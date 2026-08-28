@@ -86,9 +86,9 @@ export default function Appointments() {
   const [startTime, setStartTime] = useState('08:30');
   const [durationMin, setDurationMin] = useState(30);
   const [appointmentType, setAppointmentType] = useState('Consultation');
-  const [dentist, setDentist] = useState(userData?.name || 'Dr. Smith');
+  const [dentist, setDentist] = useState(userData?.name || '');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'Scheduled' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show'>('Scheduled');
+  const [status, setStatus] = useState<'Scheduled' | 'Arrived' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show'>('Scheduled');
   const [saving, setSaving] = useState(false);
 
   // Quick Select & Quick Add Patient popups
@@ -292,6 +292,8 @@ export default function Appointments() {
         return 'bg-emerald-50/95 border-emerald-500 text-emerald-950 hover:bg-emerald-100/90';
       case 'Scheduled':
         return 'bg-blue-50/95 border-blue-500 text-blue-950 hover:bg-blue-100/90';
+      case 'Arrived':
+        return 'bg-amber-50/95 border-amber-500 text-amber-950 hover:bg-amber-100/90';
       case 'Cancelled':
       case 'No Show':
         return 'bg-red-50/95 border-red-500 text-red-950 hover:bg-red-100/90';
@@ -367,8 +369,9 @@ export default function Appointments() {
             className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
           >
             <option value="All">All statuses</option>
-            <option value="Confirmed">Confirmed</option>
+            <option value="Confirmed">Confirmed (In Session)</option>
             <option value="Scheduled">Scheduled</option>
+            <option value="Arrived">Arrived (Waiting)</option>
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
           </select>
@@ -899,11 +902,13 @@ export default function Appointments() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 font-medium mb-1">Dentist</label>
+                  <label className="block text-slate-400 font-medium mb-1">Dentist *</label>
                   <input
                     type="text"
+                    required
                     value={dentist}
                     onChange={(e) => setDentist(e.target.value)}
+                    placeholder="Doctor's name"
                     className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                   />
                 </div>
@@ -1048,6 +1053,7 @@ export default function Appointments() {
                   <span className={`inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                     selectedAppt.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-600' :
                     selectedAppt.status === 'Scheduled' ? 'bg-blue-50 text-blue-600' :
+                    selectedAppt.status === 'Arrived' ? 'bg-amber-50 text-amber-600' :
                     'bg-red-50 text-red-600'
                   }`}>
                     {selectedAppt.status}

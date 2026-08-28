@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks/usePatients';
 import type { Patient } from '../types';
 import { 
@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 
 export default function Patients() {
   const { patients, loading, addPatient, removePatient } = usePatients();
+  const navigate = useNavigate();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -249,12 +250,14 @@ export default function Patients() {
                             <Eye size={15} />
                           </Link>
                           <button 
+                            onClick={() => navigate(`/invoices/create?patientId=${patient.id}`)}
                             title="Create Invoice"
                             className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
                           >
                             <FileText size={15} />
                           </button>
                           <button 
+                            onClick={() => navigate(`/appointments?patientId=${patient.id}&book=true`)}
                             title="Schedule Appointment"
                             className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
                           >
