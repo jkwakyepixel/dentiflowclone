@@ -1127,7 +1127,7 @@ export default function PatientDetail() {
                   placeholder="Detailed diagnosis, treatment performed, findings..."
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y"
                 />
               </div>
 
