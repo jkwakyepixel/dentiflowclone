@@ -183,6 +183,20 @@ export default function PatientDetail() {
     }
   };
 
+  const handleUpdateOperationStatus = async (opId: string, newStatus: 'TBD' | 'In Progress' | 'Done') => {
+    if (!activePlan.id || activePlan.id === 'placeholder') return;
+    try {
+      await editPlan(activePlan.id, {
+        operations: activePlan.operations.map(op => 
+          op.id === opId ? { ...op, status: newStatus } : op
+        )
+      });
+      toast.success('Operation status updated');
+    } catch (error) {
+      toast.error('Failed to update operation status');
+    }
+  };
+
   const handleDeletePlan = async () => {
     if (!activePlan.id || activePlan.id === 'placeholder') return;
     try {
@@ -704,11 +718,19 @@ export default function PatientDetail() {
                             <td className="p-3 text-slate-500 whitespace-nowrap">{op.plannedDate}</td>
                             <td className="p-3 text-slate-400 max-w-xs truncate">{op.note || 'Add a note...'}</td>
                             <td className="p-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                op.status === 'Done' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600'
-                              }`}>
-                                {op.status}
-                              </span>
+                              <select
+                                value={op.status}
+                                onChange={(e) => handleUpdateOperationStatus(op.id, e.target.value as 'TBD' | 'In Progress' | 'Done')}
+                                className={`px-2 py-1 rounded-lg text-xs font-bold border-0 cursor-pointer outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                                  op.status === 'Done' ? 'bg-emerald-50 text-emerald-600' :
+                                  op.status === 'In Progress' ? 'bg-amber-50 text-amber-600' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}
+                              >
+                                <option value="TBD">TBD</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Done">Done</option>
+                              </select>
                             </td>
                             <td className="p-3 text-right whitespace-nowrap">
                               <button
