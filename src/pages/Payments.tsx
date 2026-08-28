@@ -383,7 +383,14 @@ export default function Payments() {
               {/* Row 2: Amount & Payment method */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">Amount</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block font-medium text-slate-700">Amount</label>
+                    {selectedInvoiceId && (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                        Outstanding: GH₵ {activePatientInvoices.find(i => (i.id || i.invoiceNumber) === selectedInvoiceId)?.balance.toFixed(2) || '0.00'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="number"
                     step="0.01"
