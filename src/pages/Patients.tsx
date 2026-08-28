@@ -250,8 +250,8 @@ export default function Patients() {
                             <Eye size={15} />
                           </Link>
                           <button 
-                            onClick={() => navigate(`/invoices/create?patientId=${patient.id}`)}
-                            title="Create Invoice"
+                            onClick={() => navigate(`/patients/${patient.id}?tab=notes`)}
+                            title="Clinical Notes"
                             className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
                           >
                             <FileText size={15} />
