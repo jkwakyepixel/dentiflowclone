@@ -73,6 +73,7 @@ export default function PatientDetail() {
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
 
   // Edit Patient State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -212,19 +213,19 @@ export default function PatientDetail() {
 
   const handleAddNoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteContent.trim()) return;
+    if (!noteContent.trim() || !noteTitle.trim()) return;
 
     try {
       if (editingNoteId) {
         await editNote(editingNoteId, {
-          title: 'Clinical Note',
+          title: noteTitle.trim(),
           content: noteContent.trim(),
           category: 'General'
         });
         toast.success('Clinical note updated');
       } else {
         await addNote({
-          title: 'Clinical Note',
+          title: noteTitle.trim(),
           patientId: patient?.id || id || 'unknown',
           content: noteContent.trim(),
           category: 'General',
@@ -236,6 +237,7 @@ export default function PatientDetail() {
       setIsAddNoteModalOpen(false);
       setEditingNoteId(null);
       setNoteContent('');
+      setNoteTitle('');
     } catch (error) {
       toast.error(editingNoteId ? 'Failed to update note' : 'Failed to record clinical note');
     }
@@ -244,6 +246,7 @@ export default function PatientDetail() {
   const handleEditNote = (note: ClinicalNote) => {
     setEditingNoteId(note.id as string);
     setNoteContent(note.content);
+    setNoteTitle(note.title || 'Clinical Note');
     setIsAddNoteModalOpen(true);
   };
 
@@ -792,6 +795,7 @@ export default function PatientDetail() {
               onClick={() => {
                 setEditingNoteId(null);
                 setNoteContent('');
+                setNoteTitle('');
                 setIsAddNoteModalOpen(true);
               }}
               className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors"
@@ -806,7 +810,7 @@ export default function PatientDetail() {
               <div key={note.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-slate-900 text-xs">Clinical Note</h4>
+                    <h4 className="font-bold text-slate-900 text-xs">{note.title}</h4>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-[11px] text-slate-400 font-medium">{note.date} · {note.dentist}</span>
@@ -829,7 +833,7 @@ export default function PatientDetail() {
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap">
                   {note.content}
                 </p>
               </div>
@@ -1120,6 +1124,18 @@ export default function PatientDetail() {
             </div>
             <form onSubmit={handleAddNoteSubmit} className="p-5 space-y-3 text-xs text-slate-700">
 
+
+              <div>
+                <label className="block font-medium mb-1">Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Consultation, Follow-up"
+                  value={noteTitle}
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
 
               <div>
                 <label className="block font-medium mb-1">Clinical Note *</label>
