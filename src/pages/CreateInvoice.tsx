@@ -5,6 +5,7 @@ import { useClinic } from '../contexts/ClinicContext';
 import { usePatients } from '../hooks/usePatients';
 import { useServices } from '../hooks/useServices';
 import { useInvoices } from '../hooks/useInvoices';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import type { Patient, Invoice, InvoiceItem, ClinicService } from '../types';
 import { 
   ArrowLeft, 
@@ -90,15 +91,8 @@ export default function CreateInvoice() {
     }
   }, [dbServices]);
 
-  const handleQuickAddService = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedName = e.target.value;
+  const handleQuickAddService = (selectedName: string) => {
     if (!selectedName) return;
-
-    if (selectedName === '__ADD_NEW__') {
-      setIsNewServiceModalOpen(true);
-      e.target.value = '';
-      return;
-    }
 
     const found = catalogServices.find(s => s.name === selectedName);
     if (found) {
@@ -114,7 +108,6 @@ export default function CreateInvoice() {
         }
       ]);
     }
-    e.target.value = '';
   };
 
   const handleAddBlankLine = () => {
@@ -349,22 +342,20 @@ export default function CreateInvoice() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h2 className="text-xs font-bold text-slate-900">Services</h2>
               <div className="flex flex-wrap items-center gap-2">
-                {/* Quick Add Dropdown */}
-                <select
-                  onChange={handleQuickAddService}
-                  defaultValue=""
-                  className="border border-slate-200/90 rounded-xl px-3 py-1.5 bg-white text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer shadow-2xs"
-                >
-                  <option value="" disabled>Quick add service...</option>
-                  {catalogServices.map((s, i) => (
-                    <option key={`${s.name}-${i}`} value={s.name}>
-                      {s.name} (GH₵ {s.price.toFixed(2)})
-                    </option>
-                  ))}
-                  <option value="__ADD_NEW__" className="font-semibold text-blue-600">
-                    + Add New Custom Service...
-                  </option>
-                </select>
+                <div className="w-56">
+                  <SearchableSelect
+                    value=""
+                    onChange={handleQuickAddService}
+                    placeholder="Quick add service..."
+                    onAddCustom={() => setIsNewServiceModalOpen(true)}
+                    options={catalogServices.map(s => ({
+                      value: s.name,
+                      label: s.name,
+                      category: s.category,
+                      price: s.price
+                    }))}
+                  />
+                </div>
 
                 {/* Direct Add Blank Line */}
                 <button

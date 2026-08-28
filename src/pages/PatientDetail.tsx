@@ -11,6 +11,8 @@ import { useInvoices } from '../hooks/useInvoices';
 import { usePayments } from '../hooks/usePayments';
 import { useTreatmentPlans } from '../hooks/useTreatmentPlans';
 import { useClinicalNotes } from '../hooks/useClinicalNotes';
+import { useServices } from '../hooks/useServices';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { 
   ArrowLeft, Phone, Mail, Cake, CalendarIcon, FileText, CreditCard, Trash2, Plus, X, Edit2
 } from 'lucide-react';
@@ -27,6 +29,7 @@ export default function PatientDetail() {
   const { appointments } = useAppointments();
   const { invoices, removeInvoice } = useInvoices();
   const { payments } = usePayments();
+  const { services } = useServices();
   
   const patient = patients.find(p => p.id === id);
   const loading = patientsLoading;
@@ -67,9 +70,7 @@ export default function PatientDetail() {
   const { notes: notesList, addNote, editNote, removeNote } = useClinicalNotes(patient?.id || id);
   const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
-  const [noteCategory, setNoteCategory] = useState<'Procedure Note' | 'Diagnosis' | 'Follow-up' | 'General'>('Procedure Note');
 
   // Edit Patient State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -195,22 +196,22 @@ export default function PatientDetail() {
 
   const handleAddNoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!noteTitle.trim() || !noteContent.trim()) return;
+    if (!noteContent.trim()) return;
 
     try {
       if (editingNoteId) {
         await editNote(editingNoteId, {
-          title: noteTitle.trim(),
+          title: 'Clinical Note',
           content: noteContent.trim(),
-          category: noteCategory
+          category: 'General'
         });
         toast.success('Clinical note updated');
       } else {
         await addNote({
-          title: noteTitle.trim(),
+          title: 'Clinical Note',
           patientId: patient?.id || id || 'unknown',
           content: noteContent.trim(),
-          category: noteCategory,
+          category: 'General',
           dentist: userData?.name || 'Clinic Staff',
           date: format(new Date(), 'dd MMM yyyy')
         });
@@ -218,7 +219,6 @@ export default function PatientDetail() {
       }
       setIsAddNoteModalOpen(false);
       setEditingNoteId(null);
-      setNoteTitle('');
       setNoteContent('');
     } catch (error) {
       toast.error(editingNoteId ? 'Failed to update note' : 'Failed to record clinical note');
@@ -227,9 +227,7 @@ export default function PatientDetail() {
 
   const handleEditNote = (note: ClinicalNote) => {
     setEditingNoteId(note.id as string);
-    setNoteTitle(note.title);
     setNoteContent(note.content);
-    setNoteCategory(note.category as any);
     setIsAddNoteModalOpen(true);
   };
 
@@ -769,7 +767,6 @@ export default function PatientDetail() {
             <button
               onClick={() => {
                 setEditingNoteId(null);
-                setNoteTitle('');
                 setNoteContent('');
                 setIsAddNoteModalOpen(true);
               }}
@@ -785,10 +782,7 @@ export default function PatientDetail() {
               <div key={note.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700">
-                      {note.category}
-                    </span>
-                    <h4 className="font-bold text-slate-900 text-xs">{note.title}</h4>
+                    <h4 className="font-bold text-slate-900 text-xs">Clinical Note</h4>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-[11px] text-slate-400 font-medium">{note.date} · {note.dentist}</span>
@@ -981,14 +975,24 @@ export default function PatientDetail() {
             <form onSubmit={handleAddOperationSubmit} className="p-5 space-y-3 text-xs text-slate-700">
               <div>
                 <label className="block font-medium mb-1">Description / Procedure *</label>
-                <input
-                  type="text"
-                  required
+                <SearchableSelect
                   value={opDesc}
-                  onChange={(e) => setOpDesc(e.target.value)}
-                  placeholder="e.g. PR002 - Scaling & Polishing"
-                  className="w-full border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onChange={(val) => setOpDesc(val)}
+                  placeholder="Select or search procedure..."
+                  options={services.map(s => ({
+                    value: s.name,
+                    label: s.name,
+                    category: s.category,
+                    price: s.price
+                  }))}
+                  onAddCustom={() => {
+                    const custom = window.prompt('Enter custom procedure name:');
+                    if (custom) setOpDesc(custom);
+                  }}
                 />
+                {opDesc && !services.find(s => s.name === opDesc) && (
+                  <p className="text-xs text-blue-600 mt-1">Custom procedure: {opDesc}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1091,31 +1095,7 @@ export default function PatientDetail() {
               </button>
             </div>
             <form onSubmit={handleAddNoteSubmit} className="p-5 space-y-3 text-xs text-slate-700">
-              <div>
-                <label className="block font-medium mb-1">Title / Summary *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Scaling & Polishing Completed"
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
 
-              <div>
-                <label className="block font-medium mb-1">Category</label>
-                <select
-                  value={noteCategory}
-                  onChange={(e) => setNoteCategory(e.target.value as any)}
-                  className="w-full border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                >
-                  <option value="Procedure Note">Procedure Note</option>
-                  <option value="Diagnosis">Diagnosis</option>
-                  <option value="Follow-up">Follow-up</option>
-                  <option value="General">General</option>
-                </select>
-              </div>
 
               <div>
                 <label className="block font-medium mb-1">Clinical Note *</label>

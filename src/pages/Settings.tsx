@@ -4,6 +4,7 @@ import { useClinic } from '../contexts/ClinicContext';
 import { useServices } from '../hooks/useServices';
 import { useUsers } from '../hooks/useUsers';
 import { usePermissions } from '../hooks/usePermissions';
+import { DEFAULT_OPERATIONS } from '../utils/seedOperations';
 import { PERMISSION_LABELS, DEFAULT_ROLE_PERMISSIONS, type AppPermission, type RoleType } from '../config/permissions';
 import type { ClinicService } from '../types';
 import { 
@@ -231,6 +232,33 @@ export default function Settings() {
     }
   };
 
+  const [isSeeding, setIsSeeding] = useState(false);
+  const handleSeedOperations = async () => {
+    if (!window.confirm('This will add default operations to your clinic. Continue?')) return;
+    
+    setIsSeeding(true);
+    let successCount = 0;
+    try {
+      for (const op of DEFAULT_OPERATIONS) {
+        // Simple check to avoid exact duplicates (by name)
+        if (!services.some(s => s.name === op.name)) {
+          await addService({
+            name: op.name,
+            price: op.price,
+            category: op.category,
+            description: ''
+          });
+          successCount++;
+        }
+      }
+      toast.success(`Successfully added ${successCount} new operations!`);
+    } catch (err) {
+      toast.error('Failed to seed operations');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const filteredServices = services.filter(s => {
     const q = searchTerm.toLowerCase();
     return s.name.toLowerCase().includes(q) || (s.category && s.category.toLowerCase().includes(q));
@@ -433,13 +461,23 @@ export default function Settings() {
               />
             </div>
 
-            <button
-              onClick={handleOpenAdd}
-              className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto"
-            >
-              <Plus size={16} />
-              <span>Add New Service</span>
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={handleSeedOperations}
+                disabled={isSeeding}
+                className="inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+              >
+                {isSeeding ? <div className="w-3 h-3 border-2 border-slate-500/30 border-t-slate-500 rounded-full animate-spin" /> : null}
+                <span>Seed Operations</span>
+              </button>
+              <button
+                onClick={handleOpenAdd}
+                className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors"
+              >
+                <Plus size={16} />
+                <span>Add New Service</span>
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
