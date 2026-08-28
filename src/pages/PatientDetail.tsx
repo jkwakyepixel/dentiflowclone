@@ -38,6 +38,8 @@ export default function PatientDetail() {
   const patientInvoices = invoices.filter(i => i.patientId === id);
   const patientPayments = payments.filter(p => p.patientId === id);
   
+  const calculatedBalance = patientInvoices.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
+  
   // Tab state preserving the classic view + new tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'payments'>('overview');
   const location = useLocation();
@@ -526,7 +528,7 @@ export default function PatientDetail() {
             {/* Balance Card */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-2">
               <h2 className="text-xs text-slate-400 font-medium">Balance</h2>
-              <p className="text-2xl font-bold text-red-600">GH₵ {(Number(patient.balance) || 0).toFixed(2)}</p>
+              <p className="text-2xl font-bold text-red-600">GH₵ {calculatedBalance.toFixed(2)}</p>
               <p className="text-xs text-slate-400">Outstanding balance</p>
             </div>
 
