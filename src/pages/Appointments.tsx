@@ -367,13 +367,13 @@ export default function Appointments() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
-          >
             <option value="All">All statuses</option>
             <option value="Confirmed">Confirmed (In Session)</option>
             <option value="Scheduled">Scheduled</option>
             <option value="Arrived">Arrived (Waiting)</option>
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
+            <option value="No Show">No Show</option>
           </select>
 
           {/* Google Calendar View Switcher */}

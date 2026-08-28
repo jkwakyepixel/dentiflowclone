@@ -868,7 +868,7 @@ export default function PatientDetail() {
                   <span className={`font-semibold px-2.5 py-0.5 rounded-full text-[10px] ${
                     appt.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700' :
                     appt.status === 'Completed' ? 'bg-slate-100 text-slate-600' :
-                    appt.status === 'Cancelled' ? 'bg-red-50 text-red-600' :
+                    (appt.status === 'Cancelled' || appt.status === 'No Show') ? 'bg-red-50 text-red-600' :
                     'bg-blue-50 text-blue-700'
                   }`}>
                     {appt.status}
