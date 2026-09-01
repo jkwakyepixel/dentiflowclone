@@ -68,7 +68,7 @@ export default function Appointments() {
   
   // Views: 'day' | 'week' | 'month' | 'list'
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'list'>('week');
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 7, 26)); // Wednesday, August 26, 2026
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -82,7 +82,7 @@ export default function Appointments() {
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatientObj, setSelectedPatientObj] = useState<Patient | null>(null);
   const [clinicRoom, setClinicRoom] = useState('Surgery Room 1');
-  const [date, setDate] = useState('2026-08-26');
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('08:30');
   const [durationMin, setDurationMin] = useState(30);
   const [appointmentType, setAppointmentType] = useState('Consultation');
@@ -247,7 +247,7 @@ export default function Appointments() {
   };
 
   const handleToday = () => {
-    setCurrentDate(new Date(2026, 7, 26)); // Jump to Aug 26, 2026
+    setCurrentDate(new Date());
   };
 
   // Header Title
@@ -281,8 +281,8 @@ export default function Appointments() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   // Today stats
-  const todayDateStr = format(currentDate, 'yyyy-MM-dd');
-  const todayCount = appointments.filter(a => a.date === '2026-08-26' || a.date === todayDateStr).length || 5;
+  const actualTodayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayCount = appointments.filter(a => a.date === actualTodayStr).length || 0;
 
   const isSelectedDateInPast = isBefore(new Date(date), startOfDay(new Date()));
 
@@ -451,7 +451,7 @@ export default function Appointments() {
               {monthDays.map((dayItem, idx) => {
                 const isCurrentMonth = isSameMonth(dayItem, currentDate);
                 const dayFormatted = format(dayItem, 'yyyy-MM-dd');
-                const isTodayDate = dayFormatted === '2026-08-26' || isSameDay(dayItem, new Date());
+                const isTodayDate = isSameDay(dayItem, new Date());
                 const dayAppts = filteredAppointments.filter(a => a.date === dayFormatted);
 
                 if (!isCurrentMonth) {
@@ -534,7 +534,7 @@ export default function Appointments() {
                 </div>
                 {weekDays.map((dayItem, i) => {
                   const dayStr = format(dayItem, 'yyyy-MM-dd');
-                  const isTodayCol = dayStr === '2026-08-26' || isSameDay(dayItem, new Date());
+                  const isTodayCol = isSameDay(dayItem, new Date());
                   return (
                     <div key={i} className="text-center">
                       <p className="text-[11px] font-medium text-slate-400 uppercase">{format(dayItem, 'EEE M/d')}</p>
