@@ -80,3 +80,25 @@ export const getNextInvoiceNumber = async (
 
   return `INV-${year}-${String(nextCounter).padStart(4, '0')}`;
 };
+
+/**
+ * Generate the next quotation number atomically using a Firestore transaction.
+ *
+ * Format: `QUO-{YYYY}-{XXXX}` where YYYY is the current year.
+ */
+export const getNextQuotationNumber = async (
+  clinicId: string
+): Promise<string> => {
+  const clinicRef = doc(db, 'clinics', clinicId);
+  const year = new Date().getFullYear();
+
+  const nextCounter = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(clinicRef);
+    const current = snap.exists() ? (snap.data().quotationCounter ?? 0) : 0;
+    const next = current + 1;
+    tx.set(clinicRef, { quotationCounter: next }, { merge: true });
+    return next;
+  });
+
+  return `QUO-${year}-${String(nextCounter).padStart(4, '0')}`;
+};

@@ -11,7 +11,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { getNextInvoiceNumber } from './clinicService';
+import { getNextInvoiceNumber, getNextQuotationNumber } from './clinicService';
 import { logAction } from './auditService';
 import type { Invoice, InvoiceItem } from '../types';
 
@@ -70,9 +70,15 @@ const validateInvoiceCalculations = (
 const deriveInvoiceStatus = (
   total: number,
   amountPaid: number,
-  currentStatus?: string
+  currentStatus?: string,
+  isQuotation?: boolean
 ): Invoice['status'] => {
   if (currentStatus === 'Cancelled') return 'Cancelled';
+  if (isQuotation) {
+    if (currentStatus === 'Accepted') return 'Accepted';
+    if (currentStatus === 'Rejected') return 'Rejected';
+    return (currentStatus as Invoice['status']) || 'Draft';
+  }
   if (currentStatus === 'Draft') return 'Draft';
   if (amountPaid <= 0) return 'Unpaid';
   if (amountPaid >= total) return 'Paid';
@@ -133,6 +139,7 @@ export const getInvoicesByPatient = async (
 // ── Write ──
 
 export interface CreateInvoiceData {
+  type?: 'Invoice' | 'Quotation';
   patientId: string;
   patientName: string;
   invoiceDate: string;
@@ -155,7 +162,10 @@ export const createInvoice = async (
   userId: string,
   data: CreateInvoiceData
 ): Promise<string> => {
-  const invoiceNumber = await getNextInvoiceNumber(clinicId);
+  const isQuotation = data.type === 'Quotation';
+  const invoiceNumber = isQuotation 
+    ? await getNextQuotationNumber(clinicId) 
+    : await getNextInvoiceNumber(clinicId);
   const amountPaid = data.amountPaid ?? 0;
 
   // Validate calculations
@@ -167,9 +177,10 @@ export const createInvoice = async (
     amountPaid
   );
 
-  const status = data.status ?? deriveInvoiceStatus(calculatedTotal, amountPaid);
+  const status = data.status ?? deriveInvoiceStatus(calculatedTotal, amountPaid, undefined, isQuotation);
 
   const payload: Record<string, unknown> = {
+    type: data.type || 'Invoice',
     clinicId,
     invoiceNumber,
     patientId: data.patientId,
@@ -194,10 +205,10 @@ export const createInvoice = async (
   await logAction(
     clinicId,
     userId,
-    'INVOICE_CREATED',
+    isQuotation ? 'QUOTATION_CREATED' : 'INVOICE_CREATED',
     'invoice',
     docRef.id,
-    `Created invoice ${invoiceNumber} for ${data.patientName} — GH₵ ${calculatedTotal.toFixed(2)}`
+    `Created ${isQuotation ? 'quotation' : 'invoice'} ${invoiceNumber} for ${data.patientName} — GH₵ ${calculatedTotal.toFixed(2)}`
   );
 
   return docRef.id;
@@ -244,7 +255,7 @@ export const updateInvoice = async (
     safeData.subtotal = subtotal;
     safeData.total = calculatedTotal;
     safeData.balance = Math.max(0, balance);
-    safeData.status = deriveInvoiceStatus(calculatedTotal, amountPaid, safeData.status);
+    safeData.status = deriveInvoiceStatus(calculatedTotal, amountPaid, safeData.status, existing.type === 'Quotation');
   }
 
   await updateDoc(doc(db, COL, id), {

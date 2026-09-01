@@ -35,19 +35,21 @@ export default function PatientDetail() {
   const loading = patientsLoading;
   
   const patientAppointments = appointments.filter(a => a.patientId === id);
-  const patientInvoices = invoices.filter(i => i.patientId === id);
+  const patientInvoicesRaw = invoices.filter(i => i.patientId === id);
+  const patientInvoices = patientInvoicesRaw.filter(i => (i.type || 'Invoice') === 'Invoice');
+  const patientQuotations = patientInvoicesRaw.filter(i => i.type === 'Quotation');
   const patientPayments = payments.filter(p => p.patientId === id);
   
   const calculatedBalance = patientInvoices.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
   
   // Tab state preserving the classic view + new tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'payments'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'quotations' | 'payments'>('overview');
   const location = useLocation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
-    if (tab === 'notes' || tab === 'treatment' || tab === 'appointments' || tab === 'invoices' || tab === 'payments') {
+    if (tab === 'notes' || tab === 'treatment' || tab === 'appointments' || tab === 'invoices' || tab === 'quotations' || tab === 'payments') {
       setActiveTab(tab);
     }
   }, [location.search]);
@@ -451,6 +453,17 @@ export default function PatientDetail() {
           }`}
         >
           Invoices
+        </button>
+
+        <button
+          onClick={() => setActiveTab('quotations')}
+          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+            activeTab === 'quotations'
+              ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          Quotations
         </button>
 
         <button
@@ -944,6 +957,66 @@ export default function PatientDetail() {
                           }
                         }}
                         title="Delete Invoice"
+                        className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Quotations Tab */}
+      {activeTab === 'quotations' && (
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900">Quotations</h3>
+            <button 
+              onClick={() => navigate(`/invoices/create?patientId=${patient.id || id}&type=quotation`)}
+              className="bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-xl shadow-xs"
+            >
+              + Create Quotation
+            </button>
+          </div>
+
+          <div className="divide-y divide-slate-100 text-xs">
+            {patientQuotations.length === 0 ? (
+              <div className="py-8 text-center text-slate-400">No quotations found.</div>
+            ) : (
+              patientQuotations.map(quotation => (
+                <div key={quotation.id} className="py-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold font-mono text-slate-900">{quotation.invoiceNumber}</p>
+                    <p className="text-slate-400">{quotation.invoiceDate || quotation.dueDate} • {quotation.status}</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <p className="font-bold text-slate-900">GH₵ {(quotation.total || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <button
+                        onClick={() => navigate(`/invoices/create?edit=${quotation.id}&type=quotation`)}
+                        title="Edit Quotation"
+                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-indigo-50 transition-colors"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm('Are you sure you want to delete this quotation?')) {
+                            try {
+                              await removeInvoice(quotation.id as string);
+                              toast.success('Quotation deleted');
+                            } catch (e) {
+                              toast.error('Failed to delete quotation');
+                            }
+                          }
+                        }}
+                        title="Delete Quotation"
                         className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
                       >
                         <Trash2 size={14} />

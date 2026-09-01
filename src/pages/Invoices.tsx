@@ -34,11 +34,13 @@ export default function Invoices() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [patientFilter, setPatientFilter] = useState('All');
+  const [activeTab, setActiveTab] = useState<'Invoice' | 'Quotation'>('Invoice');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
   const filteredInvoices = invoices.filter(i => {
+    if ((i.type || 'Invoice') !== activeTab) return false;
     const query = searchTerm.toLowerCase();
     const matchesSearch = !searchTerm || 
       i.invoiceNumber.toLowerCase().includes(query) || 
@@ -50,7 +52,9 @@ export default function Invoices() {
     return matchesSearch && matchesStatus && matchesPatient;
   });
 
-  const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance || 0), 0);
+  const totalOutstanding = invoices
+    .filter(i => (i.type || 'Invoice') === 'Invoice')
+    .reduce((sum, inv) => sum + (inv.balance || 0), 0);
 
   // Unique patient names for filter
   const patientOptions = Array.from(new Set(invoices.map(i => i.patientName)));
@@ -67,10 +71,30 @@ export default function Invoices() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Invoices</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            {invoices.length} invoices · <span className="font-semibold text-slate-500">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> outstanding
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Financials</h1>
+          <div className="flex gap-6 mt-3 border-b border-slate-100">
+            <button 
+              onClick={() => setActiveTab('Invoice')} 
+              className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'Invoice' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Invoices
+            </button>
+            <button 
+              onClick={() => setActiveTab('Quotation')} 
+              className={`pb-2 text-sm font-semibold transition-colors ${activeTab === 'Quotation' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Quotations
+            </button>
+          </div>
+          {activeTab === 'Invoice' ? (
+            <p className="text-xs text-slate-400 mt-2">
+              {invoices.filter(i => (i.type || 'Invoice') === 'Invoice').length} invoices · <span className="font-semibold text-slate-500">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> outstanding
+            </p>
+          ) : (
+            <p className="text-xs text-slate-400 mt-2">
+              {invoices.filter(i => i.type === 'Quotation').length} quotations
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2.5">
           <button
@@ -81,10 +105,10 @@ export default function Invoices() {
             <span>Export Excel</span>
           </button>
 
-          <Link to="/invoices/create">
+          <Link to={`/invoices/create${activeTab === 'Quotation' ? '?type=quotation' : ''}`}>
             <button className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors">
               <Plus size={16} />
-              <span>Create Invoice</span>
+              <span>Create {activeTab}</span>
             </button>
           </Link>
         </div>
@@ -139,7 +163,7 @@ export default function Invoices() {
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="text-slate-400 font-medium border-b border-slate-100">
-                <th className="pb-3 font-medium">Invoice</th>
+                <th className="pb-3 font-medium">{activeTab}</th>
                 <th className="pb-3 font-medium">Patient</th>
                 <th className="pb-3 font-medium">Date</th>
                 <th className="pb-3 font-medium">Due date</th>
@@ -226,8 +250,8 @@ export default function Invoices() {
                           <Eye size={15} />
                         </button>
                         <button
-                          onClick={() => navigate(`/invoices/create?edit=${invoice.id}`)}
-                          title="Edit Invoice"
+                          onClick={() => navigate(`/invoices/create?edit=${invoice.id}${activeTab === 'Quotation' ? '&type=quotation' : ''}`)}
+                          title={`Edit ${activeTab}`}
                           className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
                         >
                           <Edit2 size={15} />

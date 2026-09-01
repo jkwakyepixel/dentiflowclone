@@ -26,8 +26,10 @@ export interface Clinic {
   taxEnabled?: boolean;
   taxRate?: number;
   invoicePrefix?: string;
+  quotationPrefix?: string;
   patientCounter?: number;
   invoiceCounter?: number;
+  quotationCounter?: number;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -108,6 +110,7 @@ export interface InvoiceItem {
 export interface Invoice {
   id?: string;
   clinicId: string;
+  type?: 'Invoice' | 'Quotation';
   invoiceNumber: string;
   patientId: string;
   patientName: string;
@@ -120,7 +123,7 @@ export interface Invoice {
   total: number;
   amountPaid: number;
   balance: number;
-  status: 'Draft' | 'Unpaid' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Cancelled';
+  status: 'Draft' | 'Unpaid' | 'Partially Paid' | 'Paid' | 'Overdue' | 'Cancelled' | 'Issued' | 'Accepted' | 'Rejected';
   createdAt?: any;
   updatedAt?: any;
   createdBy?: string;

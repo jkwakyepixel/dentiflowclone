@@ -39,6 +39,7 @@ export default function CreateInvoice() {
   const [searchParams] = useSearchParams();
   const urlPatientId = searchParams.get('patientId') || '';
   const editInvoiceId = searchParams.get('edit');
+  const isQuotation = searchParams.get('type') === 'quotation';
 
   const { patients } = usePatients();
   const { services: dbServices, addService } = useServices();
@@ -47,7 +48,8 @@ export default function CreateInvoice() {
   const [catalogServices, setCatalogServices] = useState<{ name: string; price: number; category?: string }[]>([]);
   
   const [patientId, setPatientId] = useState(urlPatientId);
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
+  const prefix = isQuotation ? 'QUO' : 'INV';
+  const [invoiceNumber, setInvoiceNumber] = useState(`${prefix}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
   const [invoiceDate, setInvoiceDate] = useState('2026-08-26');
   const [dueDate, setDueDate] = useState('2026-09-09');
   
@@ -209,6 +211,7 @@ export default function CreateInvoice() {
     setIsSubmitting(true);
     try {
       const invoiceData = {
+        type: isQuotation ? 'Quotation' : 'Invoice',
         patientId: selectedPatient.id || 'p-gen',
         patientName: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
         invoiceDate,
@@ -222,15 +225,15 @@ export default function CreateInvoice() {
 
       if (editInvoiceId) {
         await editInvoice(editInvoiceId, invoiceData);
-        toast.success(`Invoice ${status === 'Draft' ? 'draft saved' : 'updated'} successfully`);
+        toast.success(`${isQuotation ? 'Quotation' : 'Invoice'} ${status === 'Draft' ? 'draft saved' : 'updated'} successfully`);
       } else {
         await addInvoice(invoiceData as any);
-        toast.success(`Invoice ${status === 'Draft' ? 'draft saved' : 'created'} successfully`);
+        toast.success(`${isQuotation ? 'Quotation' : 'Invoice'} ${status === 'Draft' ? 'draft saved' : 'created'} successfully`);
       }
       
       navigate('/invoices');
     } catch (error) {
-      toast.error('Failed to create invoice');
+      toast.error(`Failed to ${editInvoiceId ? 'update' : 'create'} ${isQuotation ? 'quotation' : 'invoice'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -252,8 +255,8 @@ export default function CreateInvoice() {
       {/* Header Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{editInvoiceId ? 'Edit Invoice' : 'Create Invoice'}</h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">Invoice number {invoiceNumber}</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{editInvoiceId ? `Edit ${isQuotation ? 'Quotation' : 'Invoice'}` : `Create ${isQuotation ? 'Quotation' : 'Invoice'}`}</h1>
+          <p className="text-xs text-slate-400 font-mono mt-0.5">{isQuotation ? 'Quotation' : 'Invoice'} number {invoiceNumber}</p>
         </div>
         <div className="flex items-center gap-2.5">
           <button
@@ -275,7 +278,7 @@ export default function CreateInvoice() {
             ) : (
               <Check size={16} />
             )}
-            <span>{isSubmitting ? 'Saving...' : (editInvoiceId ? 'Update Invoice' : 'Create Invoice')}</span>
+            <span>{isSubmitting ? 'Saving...' : (editInvoiceId ? `Update ${isQuotation ? 'Quotation' : 'Invoice'}` : `Create ${isQuotation ? 'Quotation' : 'Invoice'}`)}</span>
           </button>
         </div>
       </div>
@@ -286,7 +289,7 @@ export default function CreateInvoice() {
         <div className="lg:col-span-7 space-y-6">
           {/* Card 1: Invoice Information */}
           <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4 text-xs">
-            <h2 className="text-xs font-bold text-slate-900">Invoice Information</h2>
+            <h2 className="text-xs font-bold text-slate-900">{isQuotation ? 'Quotation' : 'Invoice'} Information</h2>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -316,7 +319,7 @@ export default function CreateInvoice() {
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Invoice date</label>
+                <label className="block font-medium text-slate-700 mb-1">{isQuotation ? 'Quotation' : 'Invoice'} date</label>
                 <input
                   type="date"
                   value={invoiceDate}
@@ -326,7 +329,7 @@ export default function CreateInvoice() {
               </div>
 
               <div>
-                <label className="block font-medium text-slate-700 mb-1">Due date</label>
+                <label className="block font-medium text-slate-700 mb-1">{isQuotation ? 'Expiry' : 'Due'} date</label>
                 <input
                   type="date"
                   value={dueDate}
@@ -508,7 +511,7 @@ export default function CreateInvoice() {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">INVOICE</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{isQuotation ? 'QUOTATION' : 'INVOICE'}</span>
                   <span className="text-xs font-bold font-mono text-slate-900 block mt-0.5">{invoiceNumber}</span>
                   <span className="text-[10px] text-slate-400 block mt-0.5">{invoiceDate}</span>
                 </div>
@@ -523,7 +526,7 @@ export default function CreateInvoice() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">DUE DATE</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">{isQuotation ? 'VALID UNTIL' : 'DUE DATE'}</p>
                   <p className="text-xs font-medium text-slate-800 mt-0.5">{dueDate}</p>
                 </div>
               </div>
