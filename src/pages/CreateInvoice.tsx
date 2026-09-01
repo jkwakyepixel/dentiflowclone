@@ -224,7 +224,7 @@ export default function CreateInvoice() {
       };
 
       if (editInvoiceId) {
-        await editInvoice(editInvoiceId, invoiceData);
+        await editInvoice(editInvoiceId, invoiceData as any);
         toast.success(`${isQuotation ? 'Quotation' : 'Invoice'} ${status === 'Draft' ? 'draft saved' : 'updated'} successfully`);
       } else {
         await addInvoice(invoiceData as any);
