@@ -85,6 +85,7 @@ export interface Appointment {
   duration?: number;
   notes: string;
   status: 'Scheduled' | 'Arrived' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show';
+  sessionStartTimestamp?: number;
   createdAt?: any;
   updatedAt?: any;
   createdBy?: string;

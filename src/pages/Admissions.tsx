@@ -83,6 +83,14 @@ export default function Admissions() {
   
   const [admissions, setAdmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Quick Admit Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -130,7 +138,8 @@ export default function Admissions() {
         status: mappedStatus,
         notes: isConfirmed ? `Arrived: ${a.startTime}` : a.notes || 'Scheduled',
         date: todayDateStr,
-        isAppointment: true
+        isAppointment: true,
+        sessionStartTimestamp: a.sessionStartTimestamp
       };
     });
 
@@ -178,12 +187,13 @@ export default function Admissions() {
 
   const handleCallIn = async (item: any) => {
     try {
+      const now = Date.now();
       const updated = admissions.map(a => {
         if (a.id === item.id) {
           return {
             ...a,
             status: 'In Session',
-            elapsedMin: 1,
+            sessionStartTimestamp: now,
             notes: a.arrivalTime ? `Arrived: ${a.arrivalTime}` : 'Arrived: Just now'
           };
         }
@@ -193,11 +203,11 @@ export default function Admissions() {
       toast.success(`${item.patientName} admitted to ${item.room || 'Surgery Room 1'}`);
 
       if (item.isAppointment) {
-        await editAppointment(item.id, { status: 'Confirmed' });
+        await editAppointment(item.id, { status: 'Confirmed', sessionStartTimestamp: now });
       } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
         await editAdmission(item.id, {
           status: 'In Session',
-          sessionStartTimestamp: Date.now()
+          sessionStartTimestamp: now
         });
       }
     } catch (e) {
@@ -410,6 +420,12 @@ export default function Admissions() {
             const startT = times[0] || '1:00 PM';
             const endT = times[1] || '1:30 PM';
 
+            let calculatedElapsed = item.elapsedMin || 0;
+            if (isInSession && item.sessionStartTimestamp) {
+              calculatedElapsed = Math.floor((currentTime - item.sessionStartTimestamp) / 60000);
+            }
+            if (isInSession && calculatedElapsed < 1) calculatedElapsed = 1;
+
             return (
               <div
                 key={item.id}
@@ -497,7 +513,7 @@ export default function Admissions() {
                   {isInSession ? (
                     <div className="flex items-center gap-1.5">
                       <span className="text-[#0284c7] font-semibold text-[11px] whitespace-nowrap">
-                        In Session: {item.elapsedMin || 21} minutes
+                        In Session: {calculatedElapsed} minutes
                       </span>
                       <button
                         onClick={() => handleEndSession(item)}
