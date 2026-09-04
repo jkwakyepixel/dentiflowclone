@@ -67,7 +67,7 @@ export const AppLayout = () => {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 flex flex-col justify-between transform transition-all duration-300 ease-in-out md:translate-x-0 md:static md:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 flex flex-col justify-between transform transition-all duration-300 ease-in-out md:translate-x-0 md:static md:inset-0 print:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}
       >
@@ -159,9 +159,9 @@ export const AppLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible">
         {/* Top Navbar */}
-        <header className="h-16 px-6 md:px-8 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">
+        <header className="h-16 px-6 md:px-8 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0 print:hidden">
           <div className="flex items-center gap-4">
             <button 
               className="md:hidden text-slate-500 hover:text-slate-700 p-1 -ml-1"
@@ -196,8 +196,8 @@ export const AppLayout = () => {
         </header>
 
         {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-6 md:p-8 print:overflow-visible print:bg-white print:p-0">
+          <div className="max-w-7xl mx-auto print:max-w-none">
             <Outlet />
           </div>
         </main>

@@ -87,9 +87,10 @@ export default function Invoices() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 pb-12 print:space-y-0 print:pb-0">
+      <div className="print:hidden space-y-6">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Financials</h1>
           <div className="flex gap-6 mt-3 border-b border-slate-100">
@@ -343,13 +344,15 @@ export default function Invoices() {
           </table>
         </div>
       </div>
+      {/* End of print:hidden wrapper */}
+      </div>
 
       {/* Invoice Detail & Print Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs print:static print:inset-auto print:bg-transparent print:p-0 print:flex-none">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-150 print:shadow-none print:border-none print:max-w-none print:max-h-none print:overflow-visible print:animate-none">
             {/* Modal Actions Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 print:hidden">
               <span className="text-xs font-bold text-slate-900 font-mono">{selectedInvoice.invoiceNumber}</span>
               <div className="flex items-center gap-2">
                 <button
