@@ -50,6 +50,8 @@ export default function Payments() {
     recordedBy: string;
     remainingBalance?: number;
     notes?: string;
+    invoiceItems?: any[];
+    invoiceTotal?: number;
   } | null>(null);
 
   // Form State
@@ -126,7 +128,9 @@ export default function Payments() {
         paymentDate: formattedDate,
         recordedBy: userData?.name || 'Clinic Staff',
         remainingBalance: remainingBal,
-        notes
+        notes,
+        invoiceItems: inv.items || [],
+        invoiceTotal: inv.total
       });
 
       // Reset form
@@ -143,6 +147,7 @@ export default function Payments() {
   };
 
   const handleOpenReceiptFromRow = (p: Payment) => {
+    const inv = invoices.find(i => (i.id === p.invoiceId) || (i.invoiceNumber === p.invoiceNumber));
     setReceiptData({
       receiptNumber: `REC-${p.reference ? p.reference.replace('REF-', '') : '2026-9001'}`,
       patientName: p.patientName,
@@ -152,8 +157,10 @@ export default function Payments() {
       reference: p.reference || 'REF-9001',
       paymentDate: p.paymentDate,
       recordedBy: p.recordedBy || 'Clinic Staff',
-      remainingBalance: 0.00,
-      notes: p.notes
+      remainingBalance: inv ? inv.balance : 0.00,
+      notes: p.notes,
+      invoiceItems: inv?.items || [],
+      invoiceTotal: inv?.total || Number(p.amount)
     });
   };
 
@@ -564,22 +571,52 @@ export default function Payments() {
                     <span className="text-slate-700 italic">{receiptData.notes}</span>
                   </div>
                 )}
-                <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold">
+                
+                {/* Invoice Breakdown */}
+                {receiptData.invoiceItems && receiptData.invoiceItems.length > 0 && (
+                  <div className="mt-4 border-t border-slate-100 pt-4 pb-2">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-2 tracking-wider">Invoice Breakdown</span>
+                    <table className="w-full text-xs text-left mb-2">
+                      <thead className="border-b border-slate-100 text-slate-500">
+                        <tr>
+                          <th className="py-1 font-medium">Procedure</th>
+                          <th className="py-1 text-center font-medium">Qty</th>
+                          <th className="py-1 text-right font-medium">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {receiptData.invoiceItems.map((item: any, idx: number) => (
+                          <tr key={idx}>
+                            <td className="py-1.5 text-slate-800">{item.serviceName}</td>
+                            <td className="py-1.5 text-center text-slate-600">{item.quantity}</td>
+                            <td className="py-1.5 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="flex justify-between py-1.5 border-t border-slate-100 font-bold">
+                      <span className="text-slate-900">Invoice Total:</span>
+                      <span className="text-slate-900">GH₵ {receiptData.invoiceTotal?.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold bg-slate-50 px-2 rounded-lg mt-2">
                   <span className="text-slate-900">Amount Paid:</span>
                   <span className="text-emerald-600">GH₵ {receiptData.amount.toFixed(2)}</span>
                 </div>
                 {receiptData.remainingBalance !== undefined && (
-                  <div className="flex justify-between py-1.5 text-xs">
+                  <div className="flex justify-between py-1.5 text-xs px-2">
                     <span className="text-slate-500">Remaining Balance:</span>
-                    <span className={`font-bold ${receiptData.remainingBalance === 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {receiptData.remainingBalance === 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
+                    <span className={`font-bold ${receiptData.remainingBalance <= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {receiptData.remainingBalance <= 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
                     </span>
                   </div>
                 )}
               </div>
 
               {/* Thank you note */}
-              <div className="text-center pt-2 text-[11px] text-slate-400 border-t border-slate-100">
+              <div className="text-center pt-2 text-[11px] text-slate-400 border-t border-slate-100 mt-4">
                 <p>Thank you for choosing <span className="font-semibold text-slate-700">{clinicProfile.name || 'Bright Smile Dental Clinic'}</span> for your dental care!</p>
               </div>
             </div>
