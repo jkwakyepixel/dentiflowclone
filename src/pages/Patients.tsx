@@ -26,6 +26,7 @@ export default function Patients() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState('All genders');
+  const [contactFilter, setContactFilter] = useState('All');
 
   // New Patient Form State
   const [salutation, setSalutation] = useState('');
@@ -119,7 +120,12 @@ export default function Patients() {
 
     const matchesGender = genderFilter === 'All genders' || p.gender === genderFilter;
 
-    return matchesSearch && matchesGender && !p.isDeleted;
+    let matchesContact = true;
+    if (contactFilter === 'Has Phone') matchesContact = !!p.phone;
+    else if (contactFilter === 'Has Email') matchesContact = !!p.email;
+    else if (contactFilter === 'Missing Info') matchesContact = !p.phone || !p.email;
+
+    return matchesSearch && matchesGender && matchesContact && !p.isDeleted;
   });
 
   const getAvatarColor = (index: number) => {
@@ -175,17 +181,31 @@ export default function Patients() {
           />
         </div>
 
-        {/* Gender Filter */}
-        <select
-          value={genderFilter}
-          onChange={e => setGenderFilter(e.target.value)}
-          className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
-        >
-          <option value="All genders">All genders</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
+        <div className="flex items-center gap-2.5">
+          {/* Contact Filter */}
+          <select
+            value={contactFilter}
+            onChange={e => setContactFilter(e.target.value)}
+            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
+          >
+            <option value="All">All Contacts</option>
+            <option value="Has Phone">Has Phone</option>
+            <option value="Has Email">Has Email</option>
+            <option value="Missing Info">Missing Info</option>
+          </select>
+
+          {/* Gender Filter */}
+          <select
+            value={genderFilter}
+            onChange={e => setGenderFilter(e.target.value)}
+            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
+          >
+            <option value="All genders">All genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
       </div>
 
       {/* Patients Table Card */}

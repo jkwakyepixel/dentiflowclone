@@ -19,7 +19,7 @@ import {
   Receipt as ReceiptIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
+import { format, parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
 
 export default function Payments() {
   const { userData } = useAuth();
@@ -36,6 +36,7 @@ export default function Payments() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Receipt Modal State
@@ -182,7 +183,20 @@ export default function Payments() {
 
     const matchesMethod = methodFilter === 'All' || p.paymentMethod === methodFilter;
 
-    return matchesSearch && matchesMethod;
+    let matchesDate = true;
+    if (dateFilter !== 'All Time' && p.paymentDate) {
+      try {
+        const dateObj = parse(p.paymentDate, 'd MMM yyyy', new Date());
+        if (dateFilter === 'Today') matchesDate = isToday(dateObj);
+        else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
+        else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
+        else if (dateFilter === 'This Year') matchesDate = isThisYear(dateObj);
+      } catch (e) {
+        console.error("Date parsing error", e);
+      }
+    }
+
+    return matchesSearch && matchesMethod && matchesDate;
   });
 
   return (
@@ -257,17 +271,31 @@ export default function Payments() {
           />
         </div>
 
-        <select
-          value={methodFilter}
-          onChange={(e) => setMethodFilter(e.target.value)}
-          className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
-        >
-          <option value="All">All methods</option>
-          <option value="Cash">Cash</option>
-          <option value="Mobile Money">Mobile Money</option>
-          <option value="Card">Card</option>
-          <option value="Bank Transfer">Bank Transfer</option>
-        </select>
+        <div className="flex items-center gap-2.5">
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+          >
+            <option value="All Time">All Time</option>
+            <option value="Today">Today</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="This Year">This Year</option>
+          </select>
+
+          <select
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+          >
+            <option value="All">All methods</option>
+            <option value="Cash">Cash</option>
+            <option value="Mobile Money">Mobile Money</option>
+            <option value="Card">Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+          </select>
+        </div>
       </div>
 
       {/* Payments Table Card */}

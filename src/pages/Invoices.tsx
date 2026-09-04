@@ -21,6 +21,7 @@ import {
   Mail
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
 
 export default function Invoices() {
   const { userData } = useAuth();
@@ -34,6 +35,7 @@ export default function Invoices() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [patientFilter, setPatientFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
   const [activeTab, setActiveTab] = useState<'Invoice' | 'Quotation'>('Invoice');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
@@ -49,7 +51,25 @@ export default function Invoices() {
     const matchesStatus = statusFilter === 'All' || i.status === statusFilter;
     const matchesPatient = patientFilter === 'All' || i.patientName === patientFilter;
 
-    return matchesSearch && matchesStatus && matchesPatient;
+    let matchesDate = true;
+    if (dateFilter !== 'All Time' && i.invoiceDate) {
+      try {
+        // Assume invoiceDate is 'yyyy-MM-dd' or similar, fallback to 'd MMM yyyy' if needed
+        let dateObj = new Date(i.invoiceDate);
+        if (isNaN(dateObj.getTime())) {
+          dateObj = parse(i.invoiceDate, 'd MMM yyyy', new Date());
+        }
+        
+        if (dateFilter === 'Today') matchesDate = isToday(dateObj);
+        else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
+        else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
+        else if (dateFilter === 'This Year') matchesDate = isThisYear(dateObj);
+      } catch (e) {
+        console.error("Date parsing error", e);
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesPatient && matchesDate;
   });
 
   const totalOutstanding = invoices
@@ -129,6 +149,19 @@ export default function Invoices() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Date Filter */}
+          <select
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+          >
+            <option value="All Time">All Time</option>
+            <option value="Today">Today</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="This Year">This Year</option>
+          </select>
+
           {/* Status Dropdown */}
           <select
             value={statusFilter}
