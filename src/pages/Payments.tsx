@@ -536,110 +536,110 @@ export default function Payments() {
             </div>
 
             {/* Printable Receipt Body */}
-            <div className="p-7 space-y-6 text-xs text-slate-800" id="printable-receipt">
+            <div className="p-7 print:p-12 space-y-6 print:space-y-12 text-xs print:text-base text-slate-800" id="printable-receipt">
               {/* Clinic Branding Header */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-5">
-                <div className="flex items-center gap-3">
+              <div className="flex items-start justify-between border-b border-slate-100 pb-5 print:pb-8">
+                <div className="flex items-center gap-3 print:gap-5">
                   {clinicProfile.logo ? (
                     <img 
                       src={clinicProfile.logo} 
                       alt="Logo" 
-                      className="w-12 h-12 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
+                      className="w-12 h-12 print:w-20 print:h-20 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-bold">
-                      <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+                    <div className="w-12 h-12 print:w-20 print:h-20 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-bold">
+                      <svg className="w-7 h-7 print:w-12 print:h-12 fill-current" viewBox="0 0 24 24">
                         <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
                         <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   )}
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
-                    <p className="text-[11px] text-slate-400">{clinicProfile.address || '12 Airport Hills, Accra, Ghana'}</p>
-                    <p className="text-[11px] text-slate-400">{clinicProfile.phone || '+233 30 274 1122'} · {clinicProfile.email || 'hello@brightsmiledental.com'}</p>
+                    <h3 className="font-bold text-sm print:text-2xl text-slate-900">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
+                    <p className="text-[11px] print:text-sm text-slate-400">{clinicProfile.address || '12 Airport Hills, Accra, Ghana'}</p>
+                    <p className="text-[11px] print:text-sm text-slate-400">{clinicProfile.phone || '+233 30 274 1122'} · {clinicProfile.email || 'hello@brightsmiledental.com'}</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                  <span className="text-[10px] print:text-sm font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 print:border-none print:px-0">
                     Payment Receipt
                   </span>
-                  <p className="font-mono text-xs font-bold text-slate-800 mt-2">{receiptData.receiptNumber}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{receiptData.paymentDate}</p>
+                  <p className="font-mono text-xs print:text-lg font-bold text-slate-800 mt-2">{receiptData.receiptNumber}</p>
+                  <p className="text-[11px] print:text-sm text-slate-400 mt-0.5">{receiptData.paymentDate}</p>
                 </div>
               </div>
 
               {/* Patient & Invoice Info */}
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 print:bg-white p-4 print:p-0 rounded-xl border border-slate-100 print:border-none print:border-b print:pb-8">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Received From</span>
-                  <p className="font-bold text-slate-900 mt-0.5">{receiptData.patientName}</p>
+                  <span className="text-[10px] print:text-sm text-slate-400 uppercase font-bold block">Received From</span>
+                  <p className="font-bold text-slate-900 mt-0.5 print:text-lg">{receiptData.patientName}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Invoice Reference</span>
-                  <p className="font-mono font-bold text-blue-600 mt-0.5">{receiptData.invoiceNumber}</p>
+                  <span className="text-[10px] print:text-sm text-slate-400 uppercase font-bold block">Invoice Reference</span>
+                  <p className="font-mono font-bold text-blue-600 print:text-black mt-0.5 print:text-lg">{receiptData.invoiceNumber}</p>
                 </div>
               </div>
 
               {/* Payment Details Table */}
-              <div className="space-y-2">
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Payment Method:</span>
+              <div className="space-y-2 print:space-y-4 print:text-base">
+                <div className="flex justify-between py-1.5 print:py-3 border-b border-slate-100 print:border-slate-200">
+                  <span className="text-slate-500 print:text-slate-600">Payment Method:</span>
                   <span className="font-semibold text-slate-900">{receiptData.paymentMethod}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Transaction Reference:</span>
+                <div className="flex justify-between py-1.5 print:py-3 border-b border-slate-100 print:border-slate-200">
+                  <span className="text-slate-500 print:text-slate-600">Transaction Reference:</span>
                   <span className="font-mono text-slate-700">{receiptData.reference}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Recorded By:</span>
+                <div className="flex justify-between py-1.5 print:py-3 border-b border-slate-100 print:border-slate-200">
+                  <span className="text-slate-500 print:text-slate-600">Recorded By:</span>
                   <span className="text-slate-700">{receiptData.recordedBy}</span>
                 </div>
                 {receiptData.notes && (
-                  <div className="flex justify-between py-1.5 border-b border-slate-100">
-                    <span className="text-slate-500">Notes:</span>
+                  <div className="flex justify-between py-1.5 print:py-3 border-b border-slate-100 print:border-slate-200">
+                    <span className="text-slate-500 print:text-slate-600">Notes:</span>
                     <span className="text-slate-700 italic">{receiptData.notes}</span>
                   </div>
                 )}
                 
                 {/* Invoice Breakdown */}
                 {receiptData.invoiceItems && receiptData.invoiceItems.length > 0 && (
-                  <div className="mt-4 border-t border-slate-100 pt-4 pb-2">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-2 tracking-wider">Invoice Breakdown</span>
-                    <table className="w-full text-xs text-left mb-2">
-                      <thead className="border-b border-slate-100 text-slate-500">
+                  <div className="mt-4 print:mt-10 border-t border-slate-100 print:border-slate-200 pt-4 print:pt-6 pb-2">
+                    <span className="text-[10px] print:text-sm text-slate-400 uppercase font-bold block mb-2 tracking-wider">Invoice Breakdown</span>
+                    <table className="w-full text-xs print:text-base text-left mb-2 print:mb-6">
+                      <thead className="border-b border-slate-100 print:border-slate-200 text-slate-500 print:text-slate-600">
                         <tr>
-                          <th className="py-1 font-medium">Procedure</th>
-                          <th className="py-1 text-center font-medium">Qty</th>
-                          <th className="py-1 text-right font-medium">Total</th>
+                          <th className="py-1 print:py-3 font-medium">Procedure</th>
+                          <th className="py-1 print:py-3 text-center font-medium">Qty</th>
+                          <th className="py-1 print:py-3 text-right font-medium">Total</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 print:divide-slate-200">
                         {receiptData.invoiceItems.map((item: any, idx: number) => (
                           <tr key={idx}>
-                            <td className="py-1.5 text-slate-800">{item.serviceName}</td>
-                            <td className="py-1.5 text-center text-slate-600">{item.quantity}</td>
-                            <td className="py-1.5 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
+                            <td className="py-1.5 print:py-3 text-slate-800">{item.serviceName}</td>
+                            <td className="py-1.5 print:py-3 text-center text-slate-600">{item.quantity}</td>
+                            <td className="py-1.5 print:py-3 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="flex justify-between py-1.5 border-t border-slate-100 font-bold">
+                    <div className="flex justify-between py-1.5 print:py-4 border-t border-slate-100 print:border-slate-200 font-bold print:text-lg">
                       <span className="text-slate-900">Invoice Total:</span>
                       <span className="text-slate-900">GH₵ {receiptData.invoiceTotal?.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
                 
-                <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold bg-slate-50 px-2 rounded-lg mt-2">
+                <div className="flex justify-between py-2 print:py-4 border-b border-slate-200 text-sm print:text-xl font-bold bg-slate-50 print:bg-white print:border-y px-2 print:px-0 rounded-lg print:rounded-none mt-2 print:mt-8">
                   <span className="text-slate-900">Amount Paid:</span>
-                  <span className="text-emerald-600">GH₵ {receiptData.amount.toFixed(2)}</span>
+                  <span className="text-emerald-600 print:text-slate-900">GH₵ {receiptData.amount.toFixed(2)}</span>
                 </div>
                 {receiptData.remainingBalance !== undefined && (
-                  <div className="flex justify-between py-1.5 text-xs px-2">
-                    <span className="text-slate-500">Remaining Balance:</span>
-                    <span className={`font-bold ${receiptData.remainingBalance <= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <div className="flex justify-between py-1.5 print:py-4 text-xs print:text-base px-2 print:px-0">
+                    <span className="text-slate-500 print:text-slate-600">Remaining Balance:</span>
+                    <span className={`font-bold ${receiptData.remainingBalance <= 0 ? 'text-emerald-600 print:text-slate-900' : 'text-red-600 print:text-slate-900'}`}>
                       {receiptData.remainingBalance <= 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
                     </span>
                   </div>
@@ -647,8 +647,8 @@ export default function Payments() {
               </div>
 
               {/* Thank you note */}
-              <div className="text-center pt-2 text-[11px] text-slate-400 border-t border-slate-100 mt-4">
-                <p>Thank you for choosing <span className="font-semibold text-slate-700">{clinicProfile.name || 'Bright Smile Dental Clinic'}</span> for your dental care!</p>
+              <div className="text-center pt-2 print:pt-16 text-[11px] print:text-sm text-slate-400 print:text-slate-500 border-t border-slate-100 print:border-slate-200 mt-4 print:mt-12">
+                <p>Thank you for choosing <span className="font-semibold text-slate-700 print:text-slate-800">{clinicProfile.name || 'Bright Smile Dental Clinic'}</span> for your dental care!</p>
               </div>
             </div>
 

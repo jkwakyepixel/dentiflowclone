@@ -372,88 +372,88 @@ export default function Invoices() {
             </div>
 
             {/* Printable Document Body */}
-            <div className="p-8 space-y-6 text-xs text-slate-700">
+            <div className="p-8 print:p-12 space-y-6 print:space-y-12 text-xs print:text-base text-slate-700">
               {/* Top Banner */}
-              <div className="flex justify-between items-start border-b border-slate-100 pb-6">
-                <div className="flex items-center gap-3">
+              <div className="flex justify-between items-start border-b border-slate-100 pb-6 print:pb-8">
+                <div className="flex items-center gap-3 print:gap-5">
                   {clinicProfile.logo ? (
                     <img 
                       src={clinicProfile.logo} 
                       alt="Logo" 
-                      className="w-10 h-10 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
+                      className="w-10 h-10 print:w-20 print:h-20 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-xs">
-                      <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 print:w-20 print:h-20 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-xs">
+                      <svg className="w-6 h-6 print:w-12 print:h-12 fill-current" viewBox="0 0 24 24">
                         <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
                         <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   )}
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
-                    <p className="text-slate-400 text-[11px]">{clinicProfile.phone || '+233 30 274 1122'}</p>
-                    <p className="text-slate-400 text-[11px]">{clinicProfile.email || 'hello@brightsmiledental.com'}</p>
+                    <h3 className="font-bold text-slate-900 text-sm print:text-2xl">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
+                    <p className="text-slate-400 text-[11px] print:text-sm">{clinicProfile.phone || '+233 30 274 1122'}</p>
+                    <p className="text-slate-400 text-[11px] print:text-sm">{clinicProfile.email || 'hello@brightsmiledental.com'}</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">INVOICE</span>
-                  <span className="font-bold font-mono text-slate-900 text-sm block mt-0.5">{selectedInvoice.invoiceNumber}</span>
-                  <span className="text-slate-400 text-[11px] block mt-0.5">{selectedInvoice.invoiceDate}</span>
+                  <span className="text-[10px] print:text-sm font-bold text-slate-400 uppercase tracking-widest block">INVOICE</span>
+                  <span className="font-bold font-mono text-slate-900 text-sm print:text-lg block mt-0.5">{selectedInvoice.invoiceNumber}</span>
+                  <span className="text-slate-400 text-[11px] print:text-sm block mt-0.5">{selectedInvoice.invoiceDate}</span>
                 </div>
               </div>
 
               {/* Billed To & Status */}
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100">
+              <div className="grid grid-cols-2 gap-4 pb-4 print:pb-8 border-b border-slate-100">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">BILLED TO</p>
-                  <p className="font-bold text-slate-900 text-xs mt-1">{selectedInvoice.patientName}</p>
+                  <p className="text-[10px] print:text-sm font-bold text-slate-400 uppercase">BILLED TO</p>
+                  <p className="font-bold text-slate-900 text-xs print:text-lg mt-1">{selectedInvoice.patientName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">DUE DATE</p>
-                  <p className="font-medium text-slate-800 text-xs mt-1">{selectedInvoice.dueDate}</p>
+                  <p className="text-[10px] print:text-sm font-bold text-slate-400 uppercase">DUE DATE</p>
+                  <p className="font-medium text-slate-800 text-xs print:text-lg mt-1">{selectedInvoice.dueDate}</p>
                 </div>
               </div>
 
               {/* Items Table */}
-              <table className="w-full text-xs text-left">
+              <table className="w-full text-xs print:text-base text-left">
                 <thead>
-                  <tr className="text-slate-400 font-medium border-b border-slate-100">
-                    <th className="pb-2">Service</th>
-                    <th className="pb-2 text-center">Qty</th>
-                    <th className="pb-2 text-right">Price</th>
-                    <th className="pb-2 text-right">Total</th>
+                  <tr className="text-slate-400 font-medium border-b border-slate-100 print:border-slate-300 text-slate-500 print:text-slate-600">
+                    <th className="pb-2 print:pb-4">Service</th>
+                    <th className="pb-2 print:pb-4 text-center">Qty</th>
+                    <th className="pb-2 print:pb-4 text-right">Price</th>
+                    <th className="pb-2 print:pb-4 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-50 print:divide-slate-200">
                   {(selectedInvoice.items || []).map((item: any, idx: number) => (
                     <tr key={idx}>
-                      <td className="py-2.5 font-medium text-slate-800">{item.serviceName}</td>
-                      <td className="py-2.5 text-center text-slate-600">{item.quantity}</td>
-                      <td className="py-2.5 text-right text-slate-600">GH₵ {Number(item.unitPrice).toFixed(2)}</td>
-                      <td className="py-2.5 text-right font-bold text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
+                      <td className="py-2.5 print:py-4 font-medium text-slate-800">{item.serviceName}</td>
+                      <td className="py-2.5 print:py-4 text-center text-slate-600">{item.quantity}</td>
+                      <td className="py-2.5 print:py-4 text-right text-slate-600">GH₵ {Number(item.unitPrice).toFixed(2)}</td>
+                      <td className="py-2.5 print:py-4 text-right font-bold text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
               {/* Totals */}
-              <div className="pt-4 border-t border-slate-100 flex justify-end">
-                <div className="w-56 space-y-1.5 text-xs">
-                  <div className="flex justify-between text-slate-500">
+              <div className="pt-4 print:pt-8 border-t border-slate-100 print:border-slate-300 flex justify-end">
+                <div className="w-56 print:w-72 space-y-1.5 print:space-y-3 text-xs print:text-base">
+                  <div className="flex justify-between text-slate-500 print:text-slate-600">
                     <span>Subtotal</span>
                     <span>GH₵ {Number(selectedInvoice.subtotal || selectedInvoice.total).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-100">
+                  <div className="flex justify-between font-bold text-slate-900 pt-1 print:pt-3 border-t border-slate-100 print:border-slate-200">
                     <span>Grand Total</span>
                     <span>GH₵ {Number(selectedInvoice.total).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600">
+                  <div className="flex justify-between text-slate-600 print:text-slate-700">
                     <span>Amount Paid</span>
                     <span>GH₵ {Number(selectedInvoice.amountPaid || 0).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-red-500 pt-1 border-t border-slate-100">
+                  <div className="flex justify-between font-bold text-red-500 print:text-red-600 pt-1 print:pt-3 border-t border-slate-100 print:border-slate-200 text-sm print:text-lg">
                     <span>Balance Due</span>
                     <span>GH₵ {Number(selectedInvoice.balance || 0).toFixed(2)}</span>
                   </div>
