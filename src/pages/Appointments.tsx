@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppointments } from '../hooks/useAppointments';
 import { usePatients } from '../hooks/usePatients';
@@ -59,6 +59,7 @@ const CLINIC_ROOMS = [
 export default function Appointments() {
   const { userData } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlPatientId = searchParams.get('patientId');
   const urlBook = searchParams.get('book');
 
@@ -1101,6 +1102,12 @@ export default function Appointments() {
                 Delete
               </button>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/invoices/create?patientId=${selectedAppt.patientId}`)}
+                  className="px-4 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 rounded-xl transition-colors"
+                >
+                  + Invoice
+                </button>
                 <button
                   onClick={() => {
                     setSelectedAppt(null);
