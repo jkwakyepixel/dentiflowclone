@@ -5,6 +5,7 @@ import { useClinic } from '../contexts/ClinicContext';
 import { useInvoices } from '../hooks/useInvoices';
 import { usePatients } from '../hooks/usePatients';
 import { exportFinancialTrackerExcel } from '../services/excelExport';
+import { ExportModal } from '../components/ui/ExportModal';
 import type { Invoice, Patient } from '../types';
 import { 
   Plus, 
@@ -38,6 +39,7 @@ export default function Invoices() {
   const [dateFilter, setDateFilter] = useState('All Time');
   const [activeTab, setActiveTab] = useState<'Invoice' | 'Quotation'>('Invoice');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
@@ -119,7 +121,7 @@ export default function Invoices() {
         </div>
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => exportFinancialTrackerExcel(clinicProfile.name || 'Bright Smile Dental Clinic', patients, invoices, [])}
+            onClick={() => setIsExportModalOpen(true)}
             className="inline-flex items-center justify-center gap-1.5 bg-[#0f766e] hover:bg-[#115e59] text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl shadow-xs transition-colors"
           >
             <FileSpreadsheet size={15} />
@@ -463,6 +465,14 @@ export default function Invoices() {
           </div>
         </div>
       )}
+
+      <ExportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        onExport={(selectedMonth) => {
+          exportFinancialTrackerExcel(clinicProfile.name || 'Bright Smile Dental Clinic', patients, invoices, [], selectedMonth);
+        }} 
+      />
     </div>
   );
 }

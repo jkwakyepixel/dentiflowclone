@@ -5,6 +5,7 @@ import { usePatients } from '../hooks/usePatients';
 import { useInvoices } from '../hooks/useInvoices';
 import { usePayments } from '../hooks/usePayments';
 import { exportFinancialTrackerExcel } from '../services/excelExport';
+import { ExportModal } from '../components/ui/ExportModal';
 import type { Invoice, Patient, Payment } from '../types';
 import { 
   DollarSign, 
@@ -42,6 +43,7 @@ export default function FinancialReports() {
   const { invoices } = useInvoices();
   const { payments } = usePayments();
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const [selectedPeriod, setSelectedPeriod] = useState<
     'Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year'
@@ -50,14 +52,15 @@ export default function FinancialReports() {
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
-  const handleExportExcel = () => {
+  const handleExportExcel = (selectedMonth: string) => {
     try {
       setIsExporting(true);
       exportFinancialTrackerExcel(
         clinicProfile.name || 'Bright Smile Dental Clinic',
         patients,
         invoices,
-        payments
+        payments,
+        selectedMonth
       );
       toast.success('Excel workbook exported successfully!');
     } catch (err) {
@@ -192,10 +195,10 @@ export default function FinancialReports() {
 
           {/* Export to Excel Button matching user format */}
           <button
-            onClick={handleExportExcel}
+            onClick={() => setIsExportModalOpen(true)}
             disabled={isExporting}
             className="inline-flex items-center gap-1.5 bg-[#0f766e] hover:bg-[#115e59] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-xs transition-colors disabled:opacity-50"
-            title="Export multi-sheet Patient Invoice Summary workbook"
+            title="Export beautiful summary financial report"
           >
             <FileSpreadsheet size={15} />
             <span>{isExporting ? 'Exporting...' : 'Export Excel'}</span>
@@ -539,6 +542,12 @@ export default function FinancialReports() {
           </table>
         </div>
       </div>
+
+      <ExportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        onExport={(selectedMonth) => handleExportExcel(selectedMonth)} 
+      />
     </div>
   );
 }

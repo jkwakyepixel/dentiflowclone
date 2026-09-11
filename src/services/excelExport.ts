@@ -1,202 +1,143 @@
 import * as XLSX from 'xlsx';
+import { format, parseISO, isSameMonth } from 'date-fns';
 import type { Invoice, Patient, Payment } from '../types';
-
-export interface PatientFinancialSummary {
-  patientId: string;
-  patientName: string;
-  totalBilled: number;
-  totalPaid: number;
-  totalBalanceDue: number;
-  openInvoicesCount: number;
-  invoices: Invoice[];
-}
 
 export const exportFinancialTrackerExcel = (
   clinicName: string,
   patients: Patient[],
   invoices: Invoice[],
-  payments: Payment[]
+  payments: Payment[],
+  selectedMonth?: string // YYYY-MM format, e.g. "2026-08"
 ) => {
   const wb = XLSX.utils.book_new();
 
-  // 1. Group financial records by patient
-  const patientMap: Record<string, PatientFinancialSummary> = {};
+  // Filter invoices by month if selected
+  let filteredInvoices = invoices;
+  let reportTitleDate = 'All Time';
+  
+  if (selectedMonth) {
+    const [year, month] = selectedMonth.split('-');
+    const filterDate = new Date(Number(year), Number(month) - 1, 1);
+    reportTitleDate = format(filterDate, 'MMMM yyyy');
+    
+    filteredInvoices = invoices.filter(inv => {
+      if (!inv.invoiceDate && !inv.date) return false;
+      try {
+        const invDate = parseISO(inv.invoiceDate || inv.date || '');
+        return isSameMonth(invDate, filterDate);
+      } catch (e) {
+        return false;
+      }
+    });
+  }
 
-  patients.forEach(p => {
-    const pName = `${p.firstName} ${p.lastName}`.trim();
-    patientMap[p.id || pName] = {
-      patientId: p.patientId || p.id || '',
-      patientName: pName,
-      totalBilled: 0,
-      totalPaid: 0,
-      totalBalanceDue: 0,
-      openInvoicesCount: 0,
-      invoices: []
-    };
-  });
-
-  // Aggregate invoices
-  invoices.forEach(inv => {
-    const key = inv.patientId || inv.patientName || 'unknown';
-    if (!patientMap[key]) {
-      patientMap[key] = {
-        patientId: inv.patientId || '',
-        patientName: inv.patientName || 'Unknown Patient',
-        totalBilled: 0,
-        totalPaid: 0,
-        totalBalanceDue: 0,
-        openInvoicesCount: 0,
-        invoices: []
-      };
-    }
-    const billed = Number(inv.total) || 0;
-    const paid = Number(inv.amountPaid) || 0;
-    const balance = Number(inv.balance) || 0;
-
-    patientMap[key].totalBilled += billed;
-    patientMap[key].totalPaid += paid;
-    patientMap[key].totalBalanceDue += balance;
-    if (inv.status !== 'Paid' || balance > 0) {
-      patientMap[key].openInvoicesCount += 1;
-    }
-    patientMap[key].invoices.push(inv);
-  });
-
-  const patientSummaries = Object.values(patientMap);
-
-  // 2. Build Sheet 1: "Summary" exactly matching the reference photo
-  const summaryRows: any[] = [];
-
-  // Title Block
-  summaryRows.push(['Patient Invoice Summary']);
-  summaryRows.push(['Each row links to one patient\'s sheet (tab at bottom). Add a row here whenever you add a new patient sheet.']);
-  summaryRows.push([]); // blank row
-
-  // Table Headers
-  summaryRows.push([
-    'Patient Name',
-    'Total Billed (GH₵)',
-    'Total Paid (GH₵)',
-    'Total Balance Due (GH₵)',
-    'Open Invoices (Unpaid/Overdue)'
-  ]);
-
+  // Calculate Aggregates
   let sumBilled = 0;
   let sumPaid = 0;
   let sumBalance = 0;
-  let sumOpenInvoices = 0;
+  let openInvoicesCount = 0;
 
-  patientSummaries.forEach(ps => {
-    sumBilled += ps.totalBilled;
-    sumPaid += ps.totalPaid;
-    sumBalance += ps.totalBalanceDue;
-    sumOpenInvoices += ps.openInvoicesCount;
-
-    summaryRows.push([
-      ps.patientName,
-      ps.totalBilled > 0 ? Number(ps.totalBilled.toFixed(2)) : '-',
-      ps.totalPaid > 0 ? Number(ps.totalPaid.toFixed(2)) : '-',
-      ps.totalBalanceDue > 0 ? Number(ps.totalBalanceDue.toFixed(2)) : '-',
-      ps.openInvoicesCount
-    ]);
+  filteredInvoices.forEach(inv => {
+    const billed = Number(inv.total) || 0;
+    const paid = Number(inv.amountPaid) || 0;
+    const balance = Number(inv.balance) || 0;
+    
+    sumBilled += billed;
+    sumPaid += paid;
+    sumBalance += balance;
+    
+    if (inv.status !== 'Paid' || balance > 0) {
+      openInvoicesCount += 1;
+    }
   });
 
-  // Total Summary Row
-  summaryRows.push([
-    'TOTAL (all patients)',
+  const reportRows: any[] = [];
+
+  // --- Title & Clinic Header ---
+  reportRows.push([clinicName || 'Dentiflow Clinic']);
+  reportRows.push(['Financial Report', reportTitleDate]);
+  reportRows.push(['Generated on:', format(new Date(), 'dd MMM yyyy')]);
+  reportRows.push([]); // blank spacing
+
+  // --- High Level Summary ---
+  reportRows.push(['EXECUTIVE SUMMARY']);
+  reportRows.push(['Total Billed (GH₵)', 'Total Paid (GH₵)', 'Total Balance Due (GH₵)', 'Unpaid Invoices']);
+  reportRows.push([
     Number(sumBilled.toFixed(2)),
     Number(sumPaid.toFixed(2)),
     Number(sumBalance.toFixed(2)),
-    sumOpenInvoices
+    openInvoicesCount
+  ]);
+  reportRows.push([]); 
+  reportRows.push([]); 
+
+  // --- Detailed Invoices Breakdown ---
+  reportRows.push(['DETAILED INVOICE LOG']);
+  reportRows.push([
+    'Invoice #',
+    'Date',
+    'Patient Name',
+    'Description / Treatments',
+    'Total Billed (GH₵)',
+    'Amount Paid (GH₵)',
+    'Balance Due (GH₵)',
+    'Status'
   ]);
 
-  summaryRows.push([]);
-  summaryRows.push(['Adding a New Patient Guide:']);
-  summaryRows.push(['1) Right-click the "Template" tab -> Move or Copy -> check "Create a copy" -> OK']);
-  summaryRows.push(['2) Rename the new tab to the patient\'s name']);
-  summaryRows.push(['3) Fill in the patient info block and invoice rows']);
+  if (filteredInvoices.length === 0) {
+    reportRows.push(['No invoices found for this period.', '', '', '', '', '', '', '']);
+  } else {
+    // Sort by date descending
+    filteredInvoices.sort((a, b) => {
+      const d1 = new Date(b.invoiceDate || b.date || 0).getTime();
+      const d2 = new Date(a.invoiceDate || a.date || 0).getTime();
+      return d1 - d2;
+    });
 
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+    filteredInvoices.forEach(inv => {
+      const desc = inv.items?.map(i => i.serviceName).join(', ') || 'Dental Procedures';
+      reportRows.push([
+        inv.invoiceNumber,
+        inv.invoiceDate || inv.date || '—',
+        inv.patientName,
+        desc,
+        Number(inv.total) || 0,
+        Number(inv.amountPaid) || 0,
+        Number(inv.balance) || 0,
+        inv.status || 'Unpaid'
+      ]);
+    });
+  }
 
-  // Adjust column widths for Sheet 1
-  summarySheet['!cols'] = [
-    { wch: 26 }, // Patient Name
+  // Final totals row at bottom
+  reportRows.push([]);
+  reportRows.push([
+    'TOTALS',
+    '',
+    '',
+    '',
+    Number(sumBilled.toFixed(2)),
+    Number(sumPaid.toFixed(2)),
+    Number(sumBalance.toFixed(2)),
+    ''
+  ]);
+
+  const sheet = XLSX.utils.aoa_to_sheet(reportRows);
+
+  // Column formatting to make it look beautiful
+  sheet['!cols'] = [
+    { wch: 18 }, // Invoice #
+    { wch: 14 }, // Date
+    { wch: 25 }, // Patient Name
+    { wch: 40 }, // Description
     { wch: 20 }, // Total Billed
-    { wch: 20 }, // Total Paid
-    { wch: 25 }, // Total Balance Due
-    { wch: 30 }, // Open Invoices
+    { wch: 20 }, // Amount Paid
+    { wch: 20 }, // Balance Due
+    { wch: 15 }  // Status
   ];
 
-  XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+  XLSX.utils.book_append_sheet(wb, sheet, 'Financial Report');
 
-  // 3. Build Template Sheet
-  const templateRows: any[] = [
-    ['Patient Name:', '[Patient Name Here]', '', 'Patient ID:', '[PAT-XXXX]'],
-    ['Phone:', '+233 XX XXX XXXX', '', 'Email:', 'patient@example.com'],
-    [],
-    ['Invoice #', 'Date', 'Description / Treatment', 'Total Billed (GH₵)', 'Amount Paid (GH₵)', 'Balance Due (GH₵)', 'Status', 'Due Date'],
-    ['INV-2026-0001', '2026-08-26', 'Routine Cleaning & Examination', 350.00, 350.00, 0.00, 'Paid', '2026-09-09'],
-    ['TOTALS', '', '', 350.00, 350.00, 0.00, '', '']
-  ];
-  const templateSheet = XLSX.utils.aoa_to_sheet(templateRows);
-  templateSheet['!cols'] = [
-    { wch: 18 }, { wch: 14 }, { wch: 32 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 14 }
-  ];
-  XLSX.utils.book_append_sheet(wb, templateSheet, 'Template - Copy Me');
-
-  // 4. Build Individual Tabs for Patients with Invoices
-  patientSummaries.forEach(ps => {
-    // Sheet name limit is 31 chars in Excel
-    const safeSheetName = ps.patientName.substring(0, 30).replace(/[:\\\/\?\*\[\]]/g, '');
-    
-    const ptRows: any[] = [
-      ['Patient Name:', ps.patientName, '', 'Patient ID:', ps.patientId || 'PAT-0001'],
-      ['Clinic:', clinicName || 'Bright Smile Dental Clinic', '', 'Export Date:', '26 Aug 2026'],
-      [],
-      ['Invoice #', 'Invoice Date', 'Description / Treatments', 'Total Billed (GH₵)', 'Amount Paid (GH₵)', 'Balance Due (GH₵)', 'Status', 'Due Date']
-    ];
-
-    if (ps.invoices.length === 0) {
-      ptRows.push(['No Invoices', '—', 'No recorded procedures yet', 0, 0, 0, 'Clean', '—']);
-    } else {
-      ps.invoices.forEach(inv => {
-        const desc = inv.items?.map(i => i.serviceName).join(', ') || 'Dental Procedures';
-        ptRows.push([
-          inv.invoiceNumber,
-          inv.invoiceDate || inv.date || '2026-08-26',
-          desc,
-          Number(inv.total) || 0,
-          Number(inv.amountPaid) || 0,
-          Number(inv.balance) || 0,
-          inv.status || 'Unpaid',
-          inv.dueDate || '2026-09-09'
-        ]);
-      });
-    }
-
-    ptRows.push([
-      'TOTALS',
-      '',
-      '',
-      Number(ps.totalBilled.toFixed(2)),
-      Number(ps.totalPaid.toFixed(2)),
-      Number(ps.totalBalanceDue.toFixed(2)),
-      ps.totalBalanceDue === 0 ? 'Paid in Full' : 'Outstanding',
-      ''
-    ]);
-
-    const ptSheet = XLSX.utils.aoa_to_sheet(ptRows);
-    ptSheet['!cols'] = [
-      { wch: 18 }, { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 16 }, { wch: 14 }
-    ];
-
-    // Ensure unique sheet name
-    if (!wb.SheetNames.includes(safeSheetName)) {
-      XLSX.utils.book_append_sheet(wb, ptSheet, safeSheetName);
-    }
-  });
-
-  // 5. Download the Excel file
-  const fileName = `patient_invoice_tracker_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const fileName = `Financial_Report_${reportTitleDate.replace(/\s+/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 };
