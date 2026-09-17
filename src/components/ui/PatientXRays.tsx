@@ -47,6 +47,7 @@ export function PatientXRays({ patientId }: { patientId: string }) {
   };
 
   if (loading) return <div className="text-xs text-slate-400 p-4">Loading X-Rays...</div>;
+  if (error) return <div className="text-xs text-red-500 p-4">Error loading X-Rays: {error}. If you just created the index, please wait a minute.</div>;
 
   return (
     <div className="space-y-4">
