@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../config/firebase';
+import { db } from '../config/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import type { PatientXRay } from '../types';
+
+// IMPORTANT: Replace these with your actual Cloudinary details once you create an account
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo'; 
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
 
 export function useXRays(patientId?: string) {
   const { userData } = useAuth();
@@ -46,13 +49,30 @@ export function useXRays(patientId?: string) {
 
   const uploadXRay = async (file: File, title: string, description: string = '') => {
     if (!userData?.clinicId || !patientId) throw new Error('Missing clinic or patient info');
+    if (CLOUDINARY_CLOUD_NAME === 'demo') {
+      throw new Error('Please configure your Cloudinary Cloud Name and Upload Preset in the code first!');
+    }
 
-    // 1. Upload to Storage
-    const storageRef = ref(storage, `clinics/${userData.clinicId}/patients/${patientId}/xrays/${Date.now()}_${file.name}`);
-    const uploadTask = await uploadBytesResumable(storageRef, file);
-    const fileUrl = await getDownloadURL(uploadTask.ref);
+    // 1. Upload to Cloudinary using their REST API (No Firebase Storage)
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', `dentiflow/${userData.clinicId}/patients/${patientId}`);
 
-    // 2. Save metadata to Firestore
+    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!uploadRes.ok) {
+      const errorData = await uploadRes.json();
+      throw new Error(errorData.error?.message || 'Failed to upload image to Cloudinary');
+    }
+
+    const cloudinaryData = await uploadRes.json();
+    const fileUrl = cloudinaryData.secure_url;
+
+    // 2. Save metadata to Firestore database
     const xrayData: Omit<PatientXRay, 'id'> = {
       clinicId: userData.clinicId,
       patientId,
@@ -70,14 +90,13 @@ export function useXRays(patientId?: string) {
 
   const deleteXRay = async (xrayId: string, fileUrl: string) => {
     try {
-      // 1. Delete from Firestore
+      // 1. Delete the record from Firestore
       await deleteDoc(doc(db, 'patient_xrays', xrayId));
       
-      // 2. Delete from Storage
-      const fileRef = ref(storage, fileUrl);
-      await deleteObject(fileRef);
+      // Note: We don't delete from Cloudinary client-side for security reasons. 
+      // The image record is removed from the app instantly.
     } catch (err) {
-      console.error("Error deleting X-Ray:", err);
+      console.error("Error deleting X-Ray record:", err);
       throw err;
     }
   };
