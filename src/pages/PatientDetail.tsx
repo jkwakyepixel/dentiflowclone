@@ -13,6 +13,7 @@ import { useTreatmentPlans } from '../hooks/useTreatmentPlans';
 import { useClinicalNotes } from '../hooks/useClinicalNotes';
 import { useServices } from '../hooks/useServices';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
+import { PatientXRays } from '../components/ui/PatientXRays';
 import { 
   ArrowLeft, Phone, Mail, Cake, CalendarIcon, FileText, CreditCard, Trash2, Plus, X, Edit2
 } from 'lucide-react';
@@ -43,14 +44,14 @@ export default function PatientDetail() {
   const calculatedBalance = patientInvoices.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
   
   // Tab state preserving the classic view + new tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'quotations' | 'payments'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'treatment' | 'notes' | 'appointments' | 'invoices' | 'quotations' | 'payments' | 'xrays'>('overview');
   const location = useLocation();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tab = searchParams.get('tab');
-    if (tab === 'notes' || tab === 'treatment' || tab === 'appointments' || tab === 'invoices' || tab === 'quotations' || tab === 'payments') {
-      setActiveTab(tab);
+    if (tab === 'notes' || tab === 'treatment' || tab === 'appointments' || tab === 'invoices' || tab === 'quotations' || tab === 'payments' || tab === 'xrays') {
+      setActiveTab(tab as any);
     }
   }, [location.search]);
 
@@ -475,6 +476,17 @@ export default function PatientDetail() {
           }`}
         >
           Payments
+        </button>
+
+        <button
+          onClick={() => setActiveTab('xrays')}
+          className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
+            activeTab === 'xrays'
+              ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          X-Rays
         </button>
       </div>
 
@@ -1061,6 +1073,11 @@ export default function PatientDetail() {
             )}
           </div>
         </div>
+      )}
+
+      {/* 11. Tab: X-RAYS */}
+      {activeTab === 'xrays' && (
+        <PatientXRays patientId={patient.id || id || ''} />
       )}
 
       {/* Add Operation Modal */}

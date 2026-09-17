@@ -253,3 +253,17 @@ export interface ClinicalNote {
   createdAt?: any;
   updatedAt?: any;
 }
+
+// ── X-Rays ──
+
+export interface PatientXRay {
+  id?: string;
+  clinicId: string;
+  patientId: string;
+  title: string;
+  description?: string;
+  fileUrl: string;
+  uploadedBy: string;
+  dateUploaded: string;
+  createdAt?: any;
+}
