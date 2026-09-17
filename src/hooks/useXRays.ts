@@ -24,16 +24,24 @@ export function useXRays(patientId?: string) {
     const q = query(
       collection(db, 'patient_xrays'),
       where('clinicId', '==', userData.clinicId),
-      where('patientId', '==', patientId),
-      orderBy('createdAt', 'desc')
+      where('patientId', '==', patientId)
+      // Removed orderBy('createdAt', 'desc') to bypass Firebase Index requirement
     );
 
     const unsubscribe = onSnapshot(q, 
       (snapshot) => {
-        const results = snapshot.docs.map(doc => ({
+        let results = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as PatientXRay[];
+        
+        // Sort in memory to avoid needing a Firebase composite index!
+        results.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          return timeB - timeA;
+        });
+
         setXRays(results);
         setLoading(false);
       },

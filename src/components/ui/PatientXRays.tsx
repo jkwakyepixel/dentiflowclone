@@ -4,7 +4,7 @@ import { Upload, X, Image as ImageIcon, Trash2, Maximize2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function PatientXRays({ patientId }: { patientId: string }) {
-  const { xrays, loading, uploadXRay, deleteXRay } = useXRays(patientId);
+  const { xrays, loading, error, uploadXRay, deleteXRay } = useXRays(patientId);
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
