@@ -497,16 +497,24 @@ export default function CreateInvoice() {
               {/* Header Logo & Clinic Details */}
               <div className="flex items-start justify-between gap-4 pb-5 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-2xs flex-shrink-0">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
-                      <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
+                  {clinicProfile?.logo ? (
+                    <img 
+                      src={clinicProfile.logo} 
+                      alt="Logo" 
+                      className="w-10 h-10 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-2xs flex-shrink-0">
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
+                        <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  )}
                   <div>
-                    <h3 className="text-xs font-bold text-slate-900 leading-tight">Bright Smile Dental Clinic</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">+233 30 274 1122</p>
-                    <p className="text-[10px] text-slate-400">hello@brightsmiledental.com</p>
+                    <h3 className="text-xs font-bold text-slate-900 leading-tight">{clinicProfile?.name || 'Bright Smile Dental Clinic'}</h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{clinicProfile?.phone || '+233 30 274 1122'}</p>
+                    <p className="text-[10px] text-slate-400">{clinicProfile?.email || 'hello@brightsmiledental.com'}</p>
                   </div>
                 </div>
 

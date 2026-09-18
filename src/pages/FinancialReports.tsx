@@ -22,6 +22,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { parse, isToday, isThisWeek, isThisMonth, isThisYear, subMonths, isAfter } from 'date-fns';
 
 interface OutstandingInvoice {
   id: string;
@@ -80,19 +81,54 @@ export default function FinancialReports() {
     'This Year'
   ];
 
+  const checkDateInPeriod = (dateString: string | undefined) => {
+    if (!dateString) return true; // Include if no date
+    try {
+      let dateObj = new Date(dateString);
+      if (isNaN(dateObj.getTime())) {
+        dateObj = parse(dateString, 'd MMM yyyy', new Date());
+      }
+      
+      const now = new Date();
+      if (selectedPeriod === 'Today') return isToday(dateObj);
+      if (selectedPeriod === 'This Week') return isThisWeek(dateObj);
+      if (selectedPeriod === 'This Month') return isThisMonth(dateObj);
+      if (selectedPeriod === 'Last Month') {
+        const lastMonth = subMonths(now, 1);
+        return dateObj.getMonth() === lastMonth.getMonth() && dateObj.getFullYear() === lastMonth.getFullYear();
+      }
+      if (selectedPeriod === 'Last 3 Months') return isAfter(dateObj, subMonths(now, 3));
+      if (selectedPeriod === 'This Year') return isThisYear(dateObj);
+      
+      return true;
+    } catch (e) {
+      return true;
+    }
+  };
+
+  // Filter out quotations - only calculate actual invoices for the selected period
+  const validInvoices = invoices.filter(i => {
+    const isInvoice = (i.type || 'Invoice') === 'Invoice';
+    if (!isInvoice) return false;
+    return checkDateInPeriod(i.invoiceDate || i.date);
+  });
+
+  const filteredPayments = payments.filter(p => checkDateInPeriod(p.paymentDate));
+
+
   // Calculations
-  const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const totalInvoiced = invoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-  const totalOutstanding = invoices.reduce((sum, i) => sum + (Number(i.balance) || 0), 0);
-  const totalTransactions = payments.length;
+  const totalRevenue = filteredPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const totalInvoiced = validInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+  const totalOutstanding = validInvoices.reduce((sum, i) => sum + (Number(i.balance) || 0), 0);
+  const totalTransactions = filteredPayments.length;
 
   // Invoice statuses
-  const paidInvoices = invoices.filter(i => i.status === 'Paid' || i.balance === 0).length;
-  const partiallyPaidInvoices = invoices.filter(i => i.status === 'Partially Paid' || (i.balance > 0 && i.amountPaid > 0)).length;
-  const unpaidInvoices = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Draft' || (i.balance === i.total && i.balance > 0)).length;
-  const overdueInvoices = invoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
+  const paidInvoices = validInvoices.filter(i => i.status === 'Paid' || i.balance === 0).length;
+  const partiallyPaidInvoices = validInvoices.filter(i => i.status === 'Partially Paid' || (i.balance > 0 && i.amountPaid > 0)).length;
+  const unpaidInvoices = validInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Draft' || (i.balance === i.total && i.balance > 0)).length;
+  const overdueInvoices = validInvoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
 
-  const outstandingInvoicesList = invoices.filter(i => i.balance > 0).map(i => ({
+  const outstandingInvoicesList = validInvoices.filter(i => i.balance > 0).map(i => ({
     id: i.id || i.invoiceNumber,
     patient: i.patientName,
     invoice: i.invoiceNumber,
@@ -105,7 +141,7 @@ export default function FinancialReports() {
   }));
 
   // Group payments by date for the chart
-  const paymentsByDate = payments.reduce((acc, p) => {
+  const paymentsByDate = filteredPayments.reduce((acc, p) => {
     const date = p.paymentDate;
     if (!acc[date]) acc[date] = 0;
     acc[date] += Number(p.amount);
@@ -120,7 +156,7 @@ export default function FinancialReports() {
 
   // Service Revenue
   const serviceRevenueMap: Record<string, number> = {};
-  invoices.forEach(inv => {
+  validInvoices.forEach(inv => {
     if (inv.items) {
       inv.items.forEach(item => {
         if (!serviceRevenueMap[item.serviceName]) serviceRevenueMap[item.serviceName] = 0;
@@ -142,7 +178,7 @@ export default function FinancialReports() {
   const paymentMethods: Record<string, number> = {
     'Cash': 0, 'Mobile Money': 0, 'Bank Transfer': 0, 'Card': 0, 'Other': 0
   };
-  payments.forEach(p => {
+  filteredPayments.forEach(p => {
     if (paymentMethods[p.paymentMethod] !== undefined) {
       paymentMethods[p.paymentMethod] += Number(p.amount);
     } else {
