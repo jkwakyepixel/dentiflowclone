@@ -87,6 +87,12 @@ export default function Invoices() {
       window.print();
     }, 300);
   };
+  // KPI Calculations
+  const allInvoicesOnly = invoices.filter(i => (i.type || 'Invoice') === 'Invoice');
+  const kpiTotalInvoiced = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  const kpiTotalCollected = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.amountPaid) || 0), 0);
+  const kpiTotalOutstanding = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
+  const kpiOverdueCount = allInvoicesOnly.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
 
   return (
     <div className="space-y-6 pb-12 print:space-y-0 print:pb-0">
@@ -109,15 +115,6 @@ export default function Invoices() {
               Quotations
             </button>
           </div>
-          {activeTab === 'Invoice' ? (
-            <p className="text-xs text-slate-400 mt-2">
-              {invoices.filter(i => (i.type || 'Invoice') === 'Invoice').length} invoices · <span className="font-semibold text-slate-500">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> outstanding
-            </p>
-          ) : (
-            <p className="text-xs text-slate-400 mt-2">
-              {invoices.filter(i => i.type === 'Quotation').length} quotations
-            </p>
-          )}
         </div>
         <div className="flex items-center gap-2.5">
           <button
@@ -136,6 +133,48 @@ export default function Invoices() {
           </Link>
         </div>
       </div>
+
+      {/* KPI Cards (Only show when Invoices tab is active) */}
+      {activeTab === 'Invoice' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
+              <FileText size={22} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Total Invoiced</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
+              <Check size={22} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Amount Collected</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
+              <FileText size={22} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Total Outstanding</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#fef2f2] text-[#ef4444] flex items-center justify-center flex-shrink-0">
+              <span className="font-bold text-xl">{kpiOverdueCount}</span>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 font-medium">Overdue Invoices</p>
+              <p className="text-lg font-bold text-slate-900 mt-0.5">Requires Action</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search & Filters Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">

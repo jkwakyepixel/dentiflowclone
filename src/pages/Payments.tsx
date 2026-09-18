@@ -16,6 +16,7 @@ import {
   CreditCard,
   Printer,
   CheckCircle2,
+  Check,
   Receipt as ReceiptIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -167,12 +168,24 @@ export default function Payments() {
   };
 
   // Metric Totals
-  const todayDateStr = format(new Date(), 'dd MMM yyyy');
-  const totalTodayPayments = payments
-    .filter(p => p.paymentDate === todayDateStr)
-    .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-  const totalMonthPayments = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0); // Consider adding date checks if needed
-  const totalOutstandingBalance = invoices.reduce((acc, inv) => acc + (Number(inv.balance) || 0), 0);
+  const isPaymentThisMonth = (dateStr: string) => {
+    try {
+      const dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      return isThisMonth(dateObj);
+    } catch { return false; }
+  };
+
+  const isPaymentToday = (dateStr: string) => {
+    try {
+      const dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      return isToday(dateObj);
+    } catch { return false; }
+  };
+
+  const kpiTotalCollected = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiMonthCollected = payments.filter(p => isPaymentThisMonth(p.paymentDate)).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiTodayCollected = payments.filter(p => isPaymentToday(p.paymentDate)).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiTotalTransactions = payments.length;
 
   const filteredPayments = payments.filter(p => {
     const q = searchTerm.toLowerCase();
@@ -218,44 +231,55 @@ export default function Payments() {
         </button>
       </div>
 
-      {/* 3 KPI Cards on Top */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Payments today */}
+      {/* 4 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Collected */}
         <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl bg-[#eff6ff] text-[#2563eb] flex items-center justify-center flex-shrink-0">
-            <CalendarIcon size={20} />
+          <div className="w-12 h-12 rounded-2xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
+            <DollarSign size={22} className="stroke-[2.5]" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">Payments today</p>
-            <p className="text-base font-bold text-slate-900 mt-0.5">
-              GHC {totalTodayPayments.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-xs text-slate-400 font-medium">Total Collected</p>
+            <p className="text-lg font-bold text-slate-900 mt-0.5">
+              GH₵ {kpiTotalCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
 
-        {/* Payments this month */}
+        {/* Collected This Month */}
         <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center flex-shrink-0">
-            <DollarSign size={20} />
+          <div className="w-12 h-12 rounded-2xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
+            <CalendarIcon size={22} className="stroke-[2.5]" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">Payments this month</p>
-            <p className="text-base font-bold text-slate-900 mt-0.5">
-              GHC {totalMonthPayments.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-xs text-slate-400 font-medium">Collected This Month</p>
+            <p className="text-lg font-bold text-slate-900 mt-0.5">
+              GH₵ {kpiMonthCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
 
-        {/* Outstanding balance */}
+        {/* Collected Today */}
         <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-          <div className="w-11 h-11 rounded-xl bg-[#fffbeb] text-[#d97706] flex items-center justify-center flex-shrink-0">
-            <FileText size={20} />
+          <div className="w-12 h-12 rounded-2xl bg-[#f0fdfa] text-[#14b8a6] flex items-center justify-center flex-shrink-0">
+            <Check size={22} className="stroke-[2.5]" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium">Outstanding balance</p>
-            <p className="text-base font-bold text-slate-900 mt-0.5">
-              GHC {totalOutstandingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <p className="text-xs text-slate-400 font-medium">Collected Today</p>
+            <p className="text-lg font-bold text-slate-900 mt-0.5">
+              GH₵ {kpiTodayCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+          </div>
+        </div>
+
+        {/* Total Transactions */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
+            <CreditCard size={22} className="stroke-[2.5]" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 font-medium">Total Transactions</p>
+            <p className="text-lg font-bold text-slate-900 mt-0.5">{kpiTotalTransactions}</p>
           </div>
         </div>
       </div>
