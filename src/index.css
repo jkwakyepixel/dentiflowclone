@@ -20,7 +20,14 @@
 
 @media print {
   @page {
-    margin: 0;
-    size: auto;
+    margin: 8mm 10mm;
+    size: A4 portrait;
+  }
+  html, body {
+    background: white !important;
+    color: #0f172a !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 }
+

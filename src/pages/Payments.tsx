@@ -578,10 +578,10 @@ export default function Payments() {
         </div>
       )}
 
-      {/* BRANDED OFFICIAL PAYMENT RECEIPT MODAL */}
+      {/* BRANDED OFFICIAL PAYMENT RECEIPT MODAL (2-Up on A4 Print) */}
       {receiptData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:bg-transparent print:p-0 print:flex-none">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 my-auto animate-in fade-in zoom-in-95 duration-150 print:shadow-none print:border-none print:w-[148mm] print:ml-0 print:max-h-none print:overflow-visible print:animate-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print:static print:block print:w-full print:p-0 print:m-0 print:bg-transparent">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 my-auto animate-in fade-in zoom-in-95 duration-150 print:shadow-none print:border-none print:w-full print:max-w-none print:m-0 print:p-0 print:overflow-visible print:animate-none">
             {/* Modal Top Bar */}
             <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 print:hidden">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -596,126 +596,269 @@ export default function Payments() {
               </button>
             </div>
 
-            {/* Printable Receipt Body */}
-            <div className="p-7 space-y-6 text-xs text-slate-800" id="printable-receipt">
-              {/* Clinic Branding Header */}
-              <div className="flex items-start justify-between border-b border-slate-100 pb-5">
-                <div className="flex items-center gap-3">
-                  {clinicProfile.logo ? (
-                    <img 
-                      src={clinicProfile.logo} 
-                      alt="Logo" 
-                      className="w-12 h-12 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-bold">
-                      <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
-                        <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
-                        <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
-                    <p className="text-[11px] text-slate-400">{clinicProfile.address || '12 Airport Hills, Accra, Ghana'}</p>
-                    <p className="text-[11px] text-slate-400">{clinicProfile.phone || '+233 30 274 1122'} · {clinicProfile.email || 'hello@brightsmiledental.com'}</p>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 print:border-none print:px-0">
-                    Payment Receipt
-                  </span>
-                  <p className="font-mono text-xs font-bold text-slate-800 mt-2">{receiptData.receiptNumber}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{receiptData.paymentDate}</p>
-                </div>
-              </div>
-
-              {/* Patient & Invoice Info */}
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 print:bg-white p-4 print:p-0 rounded-xl border border-slate-100 print:border-none print:border-b print:pb-4">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Received From</span>
-                  <p className="font-bold text-slate-900 mt-0.5">{receiptData.patientName}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Invoice Reference</span>
-                  <p className="font-mono font-bold text-blue-600 print:text-black mt-0.5">{receiptData.invoiceNumber}</p>
-                </div>
-              </div>
-
-              {/* Payment Details Table */}
-              <div className="space-y-2">
-                <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">
-                  <span className="text-slate-500">Payment Method:</span>
-                  <span className="font-semibold text-slate-900">{receiptData.paymentMethod}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">
-                  <span className="text-slate-500">Transaction Reference:</span>
-                  <span className="font-mono text-slate-700">{receiptData.reference}</span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">
-                  <span className="text-slate-500">Recorded By:</span>
-                  <span className="text-slate-700">
-                    {clinicProfile.invoiceSignatoryName ? (
-                      <span>{clinicProfile.invoiceSignatoryName} {clinicProfile.invoiceSignatoryRole ? `(${clinicProfile.invoiceSignatoryRole})` : ''}</span>
+            {/* Printable Area - Contains Copy 1 (Patient), Cut Line, and Copy 2 (Clinic) */}
+            <div className="space-y-0" id="printable-receipt">
+              {/* COPY 1: PATIENT COPY (Always visible on screen & top half on print) */}
+              <div className="p-6 sm:p-7 print:px-6 print:py-3.5 space-y-4 print:space-y-2 text-xs text-slate-800 print:break-inside-avoid">
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-100 print:border-slate-300 pb-3 print:pb-2">
+                  <div className="flex items-center gap-3">
+                    {clinicProfile.logo ? (
+                      <img 
+                        src={clinicProfile.logo} 
+                        alt="Logo" 
+                        className="w-10 h-10 print:w-9 print:h-9 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
+                      />
                     ) : (
-                      receiptData.recordedBy
+                      <div className="w-10 h-10 print:w-9 print:h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-bold flex-shrink-0">
+                        <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                          <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
+                          <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
                     )}
-                  </span>
-                </div>
-                {receiptData.notes && (
-                  <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">
-                    <span className="text-slate-500">Notes:</span>
-                    <span className="text-slate-700 italic">{receiptData.notes}</span>
-                  </div>
-                )}
-                
-                {/* Invoice Breakdown */}
-                {receiptData.invoiceItems && receiptData.invoiceItems.length > 0 && (
-                  <div className="mt-4 border-t border-slate-100 print:border-slate-200 pt-4 pb-2">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block mb-2 tracking-wider">Invoice Breakdown</span>
-                    <table className="w-full text-xs text-left mb-2">
-                      <thead className="border-b border-slate-100 print:border-slate-200 text-slate-500">
-                        <tr>
-                          <th className="py-1 font-medium">Procedure</th>
-                          <th className="py-1 text-center font-medium">Qty</th>
-                          <th className="py-1 text-right font-medium">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50 print:divide-slate-100">
-                        {receiptData.invoiceItems.map((item: any, idx: number) => (
-                          <tr key={idx}>
-                            <td className="py-1.5 text-slate-800">{item.serviceName}</td>
-                            <td className="py-1.5 text-center text-slate-600">{item.quantity}</td>
-                            <td className="py-1.5 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="flex justify-between py-1.5 border-t border-slate-100 print:border-slate-200 font-bold">
-                      <span className="text-slate-900">Invoice Total:</span>
-                      <span className="text-slate-900">GH₵ {receiptData.invoiceTotal?.toFixed(2)}</span>
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900 leading-tight">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
+                      <p className="text-[10px] print:text-[9.5px] text-slate-500">{clinicProfile.address || '12 Airport Hills, Accra, Ghana'}</p>
+                      <p className="text-[10px] print:text-[9.5px] text-slate-500">{clinicProfile.phone || '+233 30 274 1122'} · {clinicProfile.email || 'hello@brightsmiledental.com'}</p>
                     </div>
                   </div>
-                )}
-                
-                <div className="flex justify-between py-2 border-b border-slate-200 text-sm font-bold bg-slate-50 print:bg-white print:border-y px-2 print:px-0 rounded-lg print:rounded-none mt-2 print:mt-4">
-                  <span className="text-slate-900">Amount Paid:</span>
-                  <span className="text-emerald-600 print:text-slate-900">GH₵ {receiptData.amount.toFixed(2)}</span>
+
+                  <div className="text-right flex-shrink-0">
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
+                      Patient Copy · Original
+                    </span>
+                    <p className="font-mono text-xs font-bold text-slate-900 mt-1">{receiptData.receiptNumber}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{receiptData.paymentDate}</p>
+                  </div>
                 </div>
-                {receiptData.remainingBalance !== undefined && (
-                  <div className="flex justify-between py-1.5 text-xs px-2 print:px-0">
-                    <span className="text-slate-500">Remaining Balance:</span>
-                    <span className={`font-bold ${receiptData.remainingBalance <= 0 ? 'text-emerald-600 print:text-slate-900' : 'text-red-600 print:text-slate-900'}`}>
-                      {receiptData.remainingBalance <= 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
+
+                {/* Patient & Invoice Info */}
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 print:bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 print:border-slate-200">
+                  <div>
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Received From</span>
+                    <p className="font-bold text-slate-900 text-xs mt-0.5">{receiptData.patientName}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Invoice Reference</span>
+                    <p className="font-mono font-bold text-blue-600 print:text-slate-900 text-xs mt-0.5">{receiptData.invoiceNumber}</p>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-100 print:border-slate-200">
+                    <span className="text-slate-500">Payment Method:</span>
+                    <span className="font-semibold text-slate-900">{receiptData.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100 print:border-slate-200">
+                    <span className="text-slate-500">Transaction Reference:</span>
+                    <span className="font-mono text-slate-700">{receiptData.reference}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100 print:border-slate-200">
+                    <span className="text-slate-500">Recorded By:</span>
+                    <span className="text-slate-700 font-medium">
+                      {clinicProfile.invoiceSignatoryName ? (
+                        <span>{clinicProfile.invoiceSignatoryName} {clinicProfile.invoiceSignatoryRole ? `(${clinicProfile.invoiceSignatoryRole})` : ''}</span>
+                      ) : (
+                        receiptData.recordedBy
+                      )}
                     </span>
                   </div>
-                )}
+                  {receiptData.notes && (
+                    <div className="flex justify-between py-1 border-b border-slate-100 print:border-slate-200">
+                      <span className="text-slate-500">Notes:</span>
+                      <span className="text-slate-700 italic">{receiptData.notes}</span>
+                    </div>
+                  )}
+
+                  {/* Invoice Breakdown */}
+                  {receiptData.invoiceItems && receiptData.invoiceItems.length > 0 && (
+                    <div className="mt-2 pt-1.5 border-t border-slate-100 print:border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Invoice Breakdown</span>
+                      <table className="w-full text-xs text-left mb-1">
+                        <thead className="border-b border-slate-100 print:border-slate-200 text-slate-500 text-[10px]">
+                          <tr>
+                            <th className="py-0.5 font-medium">Procedure</th>
+                            <th className="py-0.5 text-center font-medium">Qty</th>
+                            <th className="py-0.5 text-right font-medium">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 print:divide-slate-100 text-[11px]">
+                          {receiptData.invoiceItems.map((item: any, idx: number) => (
+                            <tr key={idx}>
+                              <td className="py-1 text-slate-800">{item.serviceName}</td>
+                              <td className="py-1 text-center text-slate-600">{item.quantity}</td>
+                              <td className="py-1 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="flex justify-between py-1 border-t border-slate-100 print:border-slate-200 font-bold text-xs">
+                        <span className="text-slate-900">Invoice Total:</span>
+                        <span className="text-slate-900">GH₵ {receiptData.invoiceTotal?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Amount Paid & Balance */}
+                  <div className="flex justify-between py-1.5 px-3 border border-slate-200/80 rounded-lg text-xs font-bold bg-slate-50 print:bg-slate-100/90 mt-1.5">
+                    <span className="text-slate-900">Amount Paid:</span>
+                    <span className="text-emerald-600 print:text-slate-900">GH₵ {receiptData.amount.toFixed(2)}</span>
+                  </div>
+                  {receiptData.remainingBalance !== undefined && (
+                    <div className="flex justify-between py-0.5 text-[11px] px-1">
+                      <span className="text-slate-500">Remaining Balance:</span>
+                      <span className={`font-bold ${receiptData.remainingBalance <= 0 ? 'text-emerald-600 print:text-slate-900' : 'text-red-600 print:text-slate-900'}`}>
+                        {receiptData.remainingBalance <= 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="pt-2 border-t border-slate-100 print:border-slate-200 flex items-center justify-between text-[10px] text-slate-500">
+                  <p>Thank you for choosing <span className="font-semibold text-slate-800">{clinicProfile.name || 'Bright Smile Dental Clinic'}</span>!</p>
+                  <p className="font-mono text-[9px] uppercase tracking-wider text-slate-400">Official Patient Receipt</p>
+                </div>
               </div>
 
-              {/* Thank you note */}
-              <div className="text-center pt-2 print:pt-4 text-[11px] text-slate-400 border-t border-slate-100 print:border-slate-200 mt-4">
-                <p>Thank you for choosing <span className="font-semibold text-slate-700">{clinicProfile.name || 'Bright Smile Dental Clinic'}</span> for your dental care!</p>
+              {/* CUT LINE SEPARATOR (Only visible when printed on A4) */}
+              <div className="hidden print:flex items-center justify-center gap-2 my-2 py-1 border-t-2 border-dashed border-slate-300 text-slate-400 font-mono text-[9px] tracking-widest uppercase">
+                <span className="text-xs">✂</span>
+                <span>Cut along this line · Clinic Accounts Copy Below</span>
+                <span className="text-xs">✂</span>
+              </div>
+
+              {/* COPY 2: CLINIC / ACCOUNTS COPY (Only visible when printed on A4) */}
+              <div className="hidden print:block p-6 sm:p-7 print:px-6 print:py-3.5 space-y-4 print:space-y-2 text-xs text-slate-800 print:break-inside-avoid">
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-slate-100 print:border-slate-300 pb-3 print:pb-2">
+                  <div className="flex items-center gap-3">
+                    {clinicProfile.logo ? (
+                      <img 
+                        src={clinicProfile.logo} 
+                        alt="Logo" 
+                        className="w-10 h-10 print:w-9 print:h-9 object-contain rounded-xl p-1 bg-slate-50 border border-slate-100"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 print:w-9 print:h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-bold flex-shrink-0">
+                        <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                          <path d="M18.8 4C17.2 4 16 5.1 15.3 6.3C14.6 4.9 13.1 4 11.4 4C8.4 4 6 6.4 6 9.4C6 14.1 10.6 18.5 11.5 19.3C11.7 19.5 11.9 19.5 12.1 19.5C12.3 19.5 12.5 19.5 12.7 19.3C13.6 18.5 18.2 14.1 18.2 9.4C18.2 8.7 18 8 17.6 7.4C18.4 6.8 19 5.8 19 4.7C19 4.3 18.9 4.1 18.8 4ZM12 17.5C10.5 16 7.8 12.8 7.8 9.4C7.8 7.4 9.4 5.8 11.4 5.8C12.8 5.8 14.1 6.6 14.7 7.9C14.8 8.2 15.1 8.4 15.5 8.4C15.9 8.4 16.2 8.2 16.3 7.8C16.8 6.5 17.8 5.8 18.8 5.8C18.9 5.8 19 5.8 19 5.9C18.8 6.7 18.2 7.3 17.4 7.6C17 7.8 16.7 8.2 16.7 8.6C16.7 8.9 16.8 9.2 17 9.4C17.1 9.4 17.1 9.4 17.1 9.4C17.1 12.8 14.4 16 12 17.5Z" opacity="0.9" />
+                          <path d="M12 2C8.5 2 5.5 4.5 5 8C4.5 11.5 6 15 8 18.5C9 20 10.5 21.5 11.5 22C11.8 22.1 12.2 22.1 12.5 22C13.5 21.5 15 20 16 18.5C18 15 19.5 11.5 19 8C18.5 4.5 15.5 2 12 2Z" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900 leading-tight">{clinicProfile.name || 'Bright Smile Dental Clinic'}</h3>
+                      <p className="text-[10px] print:text-[9.5px] text-slate-500">{clinicProfile.address || '12 Airport Hills, Accra, Ghana'}</p>
+                      <p className="text-[10px] print:text-[9.5px] text-slate-500">{clinicProfile.phone || '+233 30 274 1122'} · {clinicProfile.email || 'hello@brightsmiledental.com'}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right flex-shrink-0">
+                    <span className="inline-block text-[9px] font-bold uppercase tracking-wider text-slate-800 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-300">
+                      Clinic Copy · Duplicate
+                    </span>
+                    <p className="font-mono text-xs font-bold text-slate-900 mt-1">{receiptData.receiptNumber}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{receiptData.paymentDate}</p>
+                  </div>
+                </div>
+
+                {/* Patient & Invoice Info */}
+                <div className="grid grid-cols-2 gap-3 bg-slate-50/70 p-2.5 rounded-lg border border-slate-200">
+                  <div>
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Received From</span>
+                    <p className="font-bold text-slate-900 text-xs mt-0.5">{receiptData.patientName}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Invoice Reference</span>
+                    <p className="font-mono font-bold text-slate-900 text-xs mt-0.5">{receiptData.invoiceNumber}</p>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-200">
+                    <span className="text-slate-500">Payment Method:</span>
+                    <span className="font-semibold text-slate-900">{receiptData.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-200">
+                    <span className="text-slate-500">Transaction Reference:</span>
+                    <span className="font-mono text-slate-700">{receiptData.reference}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-200">
+                    <span className="text-slate-500">Recorded By:</span>
+                    <span className="text-slate-700 font-medium">
+                      {clinicProfile.invoiceSignatoryName ? (
+                        <span>{clinicProfile.invoiceSignatoryName} {clinicProfile.invoiceSignatoryRole ? `(${clinicProfile.invoiceSignatoryRole})` : ''}</span>
+                      ) : (
+                        receiptData.recordedBy
+                      )}
+                    </span>
+                  </div>
+                  {receiptData.notes && (
+                    <div className="flex justify-between py-1 border-b border-slate-200">
+                      <span className="text-slate-500">Notes:</span>
+                      <span className="text-slate-700 italic">{receiptData.notes}</span>
+                    </div>
+                  )}
+
+                  {/* Invoice Breakdown */}
+                  {receiptData.invoiceItems && receiptData.invoiceItems.length > 0 && (
+                    <div className="mt-2 pt-1.5 border-t border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Invoice Breakdown</span>
+                      <table className="w-full text-xs text-left mb-1">
+                        <thead className="border-b border-slate-200 text-slate-500 text-[10px]">
+                          <tr>
+                            <th className="py-0.5 font-medium">Procedure</th>
+                            <th className="py-0.5 text-center font-medium">Qty</th>
+                            <th className="py-0.5 text-right font-medium">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-[11px]">
+                          {receiptData.invoiceItems.map((item: any, idx: number) => (
+                            <tr key={idx}>
+                              <td className="py-1 text-slate-800">{item.serviceName}</td>
+                              <td className="py-1 text-center text-slate-600">{item.quantity}</td>
+                              <td className="py-1 text-right font-medium text-slate-900">GH₵ {Number(item.total).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="flex justify-between py-1 border-t border-slate-200 font-bold text-xs">
+                        <span className="text-slate-900">Invoice Total:</span>
+                        <span className="text-slate-900">GH₵ {receiptData.invoiceTotal?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Amount Paid & Balance */}
+                  <div className="flex justify-between py-1.5 px-3 border border-slate-200 rounded-lg text-xs font-bold bg-slate-100/90 mt-1.5">
+                    <span className="text-slate-900">Amount Paid:</span>
+                    <span className="text-slate-900">GH₵ {receiptData.amount.toFixed(2)}</span>
+                  </div>
+                  {receiptData.remainingBalance !== undefined && (
+                    <div className="flex justify-between py-0.5 text-[11px] px-1">
+                      <span className="text-slate-500">Remaining Balance:</span>
+                      <span className="font-bold text-slate-900">
+                        {receiptData.remainingBalance <= 0 ? 'PAID IN FULL (GH₵ 0.00)' : `GH₵ ${receiptData.remainingBalance.toFixed(2)}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer with Signatures for Clinic Copy */}
+                <div className="pt-2.5 border-t border-slate-200 mt-2 grid grid-cols-2 gap-6 text-[10px]">
+                  <div>
+                    <div className="w-36 border-b border-slate-400 mb-1" />
+                    <span className="text-slate-500 text-[9px] uppercase font-mono">Patient / Recipient Signature</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="w-36 border-b border-slate-400 mb-1" />
+                    <span className="text-slate-500 text-[9px] uppercase font-mono">Cashier / Staff Signature</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -723,16 +866,16 @@ export default function Payments() {
             <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50 print:hidden">
               <button
                 onClick={() => setReceiptData(null)}
-                className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl"
+                className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-200/70 rounded-xl text-xs"
               >
                 Close
               </button>
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-xs"
+                className="inline-flex items-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow-xs text-xs"
               >
                 <Printer size={15} />
-                <span>Print Receipt</span>
+                <span>Print Receipt (2 Copies / A4)</span>
               </button>
             </div>
           </div>
