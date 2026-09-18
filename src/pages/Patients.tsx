@@ -130,14 +130,14 @@ export default function Patients() {
 
   const getAvatarColor = (index: number) => {
     const colors = [
-      'bg-[#1e293b]',
-      'bg-[#0d9488]',
-      'bg-[#334155]',
-      'bg-[#059669]',
-      'bg-[#10b981]',
-      'bg-[#0f766e]',
-      'bg-[#047857]',
-      'bg-[#065f46]'
+      'bg-blue-50 text-blue-600',
+      'bg-emerald-50 text-emerald-600',
+      'bg-purple-50 text-purple-600',
+      'bg-amber-50 text-amber-600',
+      'bg-pink-50 text-pink-600',
+      'bg-cyan-50 text-cyan-600',
+      'bg-indigo-50 text-indigo-600',
+      'bg-rose-50 text-rose-600'
     ];
     return colors[index % colors.length];
   };
@@ -209,7 +209,7 @@ export default function Patients() {
       </div>
 
       {/* Patients Table Card */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
         <div className="overflow-x-auto">
           {filteredPatients.length === 0 ? (
             <div className="py-12 text-center text-slate-500 text-sm">
@@ -218,13 +218,13 @@ export default function Patients() {
           ) : (
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="text-slate-400 font-medium border-b border-slate-100">
-                  <th className="pb-3 font-medium">Patient</th>
-                  <th className="pb-3 font-medium">Phone</th>
-                  <th className="pb-3 font-medium">Email</th>
-                  <th className="pb-3 font-medium">DOB</th>
-                  <th className="pb-3 font-medium">Gender</th>
-                  <th className="pb-3 font-medium text-right">Actions</th>
+                <tr className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-100">
+                  <th className="py-3 px-6">Patient</th>
+                  <th className="py-3 px-4">Phone</th>
+                  <th className="py-3 px-4">Email</th>
+                  <th className="py-3 px-4">DOB</th>
+                  <th className="py-3 px-4">Gender</th>
+                  <th className="py-3 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -233,62 +233,72 @@ export default function Patients() {
                   const avatarBg = getAvatarColor(index);
 
                   return (
-                    <tr key={patient.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={patient.id} className="hover:bg-blue-50/30 transition-colors group">
                       {/* Patient Name & Code */}
-                      <td className="py-3.5 pr-4">
-                        <Link to={`/patients/${patient.id}`} className="flex items-center gap-3 group">
-                          <div className={`w-8 h-8 rounded-full ${avatarBg} text-white flex items-center justify-center font-bold text-[11px] flex-shrink-0 shadow-2xs`}>
+                      <td className="py-3.5 px-6">
+                        <Link to={`/patients/${patient.id}`} className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs flex-shrink-0 border border-black/5 shadow-2xs`}>
                             {initials}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">{patient.firstName} {patient.lastName}</p>
+                            <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight text-[13px]">{patient.firstName} {patient.lastName}</p>
                             <p className="text-[11px] text-slate-400 font-mono mt-0.5">{patient.patientId}</p>
                           </div>
                         </Link>
                       </td>
 
                       {/* Phone */}
-                      <td className="py-3.5 text-slate-600 font-normal whitespace-nowrap">{patient.phone || '—'}</td>
+                      <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">{patient.phone || '—'}</td>
 
                       {/* Email */}
-                      <td className="py-3.5 text-slate-600 font-normal">{patient.email || '—'}</td>
+                      <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.email || '—'}</td>
 
                       {/* DOB */}
-                      <td className="py-3.5 text-slate-600 font-normal whitespace-nowrap">{patient.dateOfBirth || '—'}</td>
+                      <td className="py-3.5 px-4 text-slate-600 font-normal whitespace-nowrap">{patient.dateOfBirth || '—'}</td>
 
                       {/* Gender */}
-                      <td className="py-3.5 text-slate-600 font-normal">{patient.gender || '—'}</td>
+                      <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.gender || '—'}</td>
 
                       {/* Actions */}
-                      <td className="py-3.5 text-right">
-                        <div className="inline-flex items-center justify-end gap-2">
+                      <td className="py-3.5 px-6">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Link 
                             to={`/patients/${patient.id}`}
-                            title="View Details"
-                            className="text-slate-400 hover:text-blue-600 p-1 rounded-md hover:bg-blue-50 transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View Record"
                           >
-                            <Eye size={15} />
+                            <Eye size={16} />
                           </Link>
                           <button 
-                            onClick={() => navigate(`/patients/${patient.id}?tab=notes`)}
-                            title="Clinical Notes"
-                            className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="New Invoice"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate('/invoices');
+                            }}
                           >
-                            <FileText size={15} />
+                            <FileText size={16} />
                           </button>
                           <button 
-                            onClick={() => navigate(`/appointments?patientId=${patient.id}&book=true`)}
-                            title="Schedule Appointment"
-                            className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Book Appointment"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate('/appointments');
+                            }}
                           >
-                            <CalendarIcon size={15} />
+                            <CalendarIcon size={16} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(patient.id as string, `${patient.firstName} ${patient.lastName}`)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDelete(patient.id as string, `${patient.firstName} ${patient.lastName}`);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-1"
                             title="Delete Patient"
-                            className="text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors ml-1"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
