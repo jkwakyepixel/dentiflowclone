@@ -28,6 +28,9 @@ export interface Clinic {
   invoicePrefix?: string;
   quotationPrefix?: string;
   patientCounter?: number;
+  invoiceSignatoryName?: string;
+  invoiceSignatoryRole?: string;
+  doctors?: string[];
   invoiceCounter?: number;
   quotationCounter?: number;
   createdAt?: any;

@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { Pagination } from '../components/ui/Pagination';
+
 export default function Patients() {
   const { patients, loading, addPatient, removePatient } = usePatients();
   const navigate = useNavigate();
@@ -27,6 +29,8 @@ export default function Patients() {
   const [searchTerm, setSearchTerm] = useState('');
   const [genderFilter, setGenderFilter] = useState('All genders');
   const [contactFilter, setContactFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // New Patient Form State
   const [salutation, setSalutation] = useState('');
@@ -124,6 +128,8 @@ export default function Patients() {
 
     return matchesSearch && matchesGender && matchesContact && !p.isDeleted;
   });
+
+  const paginatedPatients = filteredPatients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getAvatarColor = (index: number) => {
     const colors = [
@@ -224,7 +230,7 @@ export default function Patients() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredPatients.map((patient, index: number) => {
+                {paginatedPatients.map((patient, index: number) => {
                   const initials = `${patient.firstName?.[0] || ''}${patient.lastName?.[0] || ''}`.toUpperCase() || 'P';
                   const avatarBg = getAvatarColor(index);
 
@@ -244,13 +250,39 @@ export default function Patients() {
                       </td>
 
                       {/* Phone */}
-                      <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">{patient.phone || '—'}</td>
+                      <td className="py-3.5 px-4">
+                        {patient.phone ? (
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <Phone size={12} className="text-slate-400" />
+                            <span>{patient.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">No phone</span>
+                        )}
+                      </td>
 
                       {/* Email */}
-                      <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.email || '—'}</td>
+                      <td className="py-3.5 px-4">
+                        {patient.email ? (
+                          <div className="flex items-center gap-1.5 text-slate-600">
+                            <Mail size={12} className="text-slate-400" />
+                            <span className="truncate max-w-[120px]" title={patient.email}>{patient.email}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">No email</span>
+                        )}
+                      </td>
 
                       {/* Gender */}
-                      <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.gender || '—'}</td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          patient.gender === 'Male' ? 'bg-blue-50 text-blue-600' :
+                          patient.gender === 'Female' ? 'bg-pink-50 text-pink-600' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {patient.gender || 'Unknown'}
+                        </span>
+                      </td>
 
                       {/* Actions */}
                       <td className="py-3.5 px-6">
@@ -302,6 +334,15 @@ export default function Patients() {
             </table>
           )}
         </div>
+        
+        {filteredPatients.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={filteredPatients.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
 
       {/* View Patient Details Modal */}

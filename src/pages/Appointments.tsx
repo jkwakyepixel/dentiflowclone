@@ -41,6 +41,8 @@ import {
   startOfDay 
 } from 'date-fns';
 import toast from 'react-hot-toast';
+import { Pagination } from '../components/ui/Pagination';
+import { useClinic } from '../contexts/ClinicContext';
 
 // TIME_SLOTS and CLINIC_ROOMS restored
 const TIME_SLOTS = [
@@ -58,10 +60,14 @@ const CLINIC_ROOMS = [
 
 export default function Appointments() {
   const { userData } = useAuth();
+  const { clinicProfile } = useClinic();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlPatientId = searchParams.get('patientId');
   const urlBook = searchParams.get('book');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { appointments, loading: apptsLoading, addAppointment, removeAppointment, editAppointment } = useAppointments();
   const { patients, loading: patientsLoading, addPatient } = usePatients();
@@ -251,6 +257,8 @@ export default function Appointments() {
 
     return matchesSearch && matchesStatus && matchesDate;
   });
+
+  const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Navigation handlers
   const handlePrev = () => {
@@ -685,7 +693,8 @@ export default function Appointments() {
 
         {/* 4. LIST VIEW */}
         {viewMode === 'list' && (
-          <div className="overflow-x-auto">
+          <div className="flex flex-col">
+            <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="text-slate-400 font-medium border-b border-slate-100">
@@ -699,7 +708,7 @@ export default function Appointments() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredAppointments.map((item) => (
+                {paginatedAppointments.map((item) => (
                   <tr 
                     key={item.id} 
                     onClick={() => setSelectedAppt(item)}
@@ -711,7 +720,7 @@ export default function Appointments() {
                     <td className="py-3.5 font-bold text-slate-900">{item.patientName}</td>
                     <td className="py-3.5 text-slate-600">{item.room || 'Surgery Room 1'}</td>
                     <td className="py-3.5 text-slate-600">{item.appointmentType}</td>
-                    <td className="py-3.5 text-slate-500">Dr. {item.dentist}</td>
+                    <td className="py-3.5 text-slate-500">{item.dentist.startsWith('Dr.') ? item.dentist : `Dr. ${item.dentist}`}</td>
                     <td className="py-3.5 text-slate-400 max-w-xs truncate">{item.notes || '—'}</td>
                     <td className="py-3.5 text-right whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
@@ -726,9 +735,26 @@ export default function Appointments() {
                     </td>
                   </tr>
                 ))}
+                {filteredAppointments.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-10 text-center text-slate-400">
+                      No appointments found for this filter.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
+          
+          {filteredAppointments.length > 0 && (
+            <Pagination 
+              currentPage={currentPage}
+              totalItems={filteredAppointments.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </div>
         )}
 
         {/* Legend */}
@@ -928,14 +954,23 @@ export default function Appointments() {
 
                 <div>
                   <label className="block text-slate-400 font-medium mb-1">Dentist *</label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={dentist}
                     onChange={(e) => setDentist(e.target.value)}
-                    placeholder="Doctor's name"
-                    className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
-                  />
+                    className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs bg-white"
+                  >
+                    {clinicProfile?.doctors?.length ? (
+                      clinicProfile.doctors.map((doc: string) => (
+                        <option key={doc} value={doc}>{doc}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Dr. Sarah Smith">Dr. Sarah Smith</option>
+                        <option value="Dr. Michael Chang">Dr. Michael Chang</option>
+                      </>
+                    )}
+                  </select>
                 </div>
               </div>
 

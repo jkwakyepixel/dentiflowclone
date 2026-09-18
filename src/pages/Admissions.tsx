@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments } from '../hooks/useAppointments';
 import { useAdmissions } from '../hooks/useAdmissions';
+import { useClinic } from '../contexts/ClinicContext';
+import { usePatients } from '../hooks/usePatients';
 import type { Admission } from '../types';
 import { 
   Search, 
@@ -81,6 +83,8 @@ export default function Admissions() {
   const navigate = useNavigate();
   const { admissions: dbAdmissions, addAdmission, editAdmission } = useAdmissions();
   const { appointments: dbAppts, editAppointment } = useAppointments();
+  const { clinicProfile } = useClinic();
+  const { patients } = usePatients();
   
   const [admissions, setAdmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -636,24 +640,39 @@ export default function Admissions() {
             <form onSubmit={handleAddAdmission} className="p-5 space-y-3.5 text-xs text-slate-700">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Patient Name *</label>
-                <input
-                  type="text"
+                <select
                   required
-                  placeholder="e.g. Samuel Tetteh"
                   value={patientNameInput}
                   onChange={(e) => setPatientNameInput(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                  className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">Select patient...</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={`${p.firstName} ${p.lastName}`}>
+                      {p.firstName} {p.lastName}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Doctor / Dentist</label>
-                <input
-                  type="text"
+                <select
                   value={dentistInput}
                   onChange={(e) => setDentistInput(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                  className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                >
+                  {clinicProfile?.doctors?.length ? (
+                    clinicProfile.doctors.map((doc: string) => (
+                      <option key={doc} value={doc}>{doc}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Dr. Sarah Smith">Dr. Sarah Smith</option>
+                      <option value="Dr. Michael Chang">Dr. Michael Chang</option>
+                    </>
+                  )}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

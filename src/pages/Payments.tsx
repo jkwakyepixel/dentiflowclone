@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
+import { Pagination } from '../components/ui/Pagination';
 
 export default function Payments() {
   const { userData } = useAuth();
@@ -40,6 +41,9 @@ export default function Payments() {
   const [methodFilter, setMethodFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All Time');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Receipt Modal State
   const [receiptData, setReceiptData] = useState<{
@@ -222,6 +226,8 @@ export default function Payments() {
     return matchesSearch && matchesMethod && matchesDate;
   });
 
+  const paginatedPayments = filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="space-y-6 pb-12 print:space-y-0 print:pb-0">
       <div className="print:hidden space-y-6">
@@ -350,24 +356,36 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredPayments.map((p) => (
+              {paginatedPayments.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 text-slate-600 whitespace-nowrap">{p.paymentDate}</td>
+                  <td className="py-3.5 text-slate-500 whitespace-nowrap">{p.paymentDate}</td>
                   <td className="py-3.5 font-bold text-slate-900 whitespace-nowrap">{p.patientName}</td>
                   <td className="py-3.5 font-mono text-slate-500 whitespace-nowrap">{p.invoiceNumber}</td>
                   <td className="py-3.5 font-bold text-slate-900 whitespace-nowrap">
-                    GHC {Number(p.amount).toFixed(2)}
+                    GH₵ {Number(p.amount).toFixed(2)}
                   </td>
-                  <td className="py-3.5 text-slate-600 whitespace-nowrap">{p.paymentMethod}</td>
-                  <td className="py-3.5 font-mono text-slate-500 whitespace-nowrap">{p.reference || '—'}</td>
+                  <td className="py-3.5 text-slate-600 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${
+                        p.paymentMethod === 'Cash' ? 'bg-blue-500' :
+                        p.paymentMethod === 'Mobile Money' ? 'bg-teal-500' :
+                        p.paymentMethod === 'Card' ? 'bg-emerald-500' :
+                        'bg-amber-500'
+                      }`}></span>
+                      {p.paymentMethod}
+                    </div>
+                  </td>
+                  <td className="py-3.5 text-slate-500 font-mono text-[10px] whitespace-nowrap">
+                    {p.reference || '—'}
+                  </td>
                   <td className="py-3.5 text-slate-600 whitespace-nowrap">{p.recordedBy || 'Clinic Staff'}</td>
                   <td className="py-3.5 text-right whitespace-nowrap">
                     <button
                       onClick={() => handleOpenReceiptFromRow(p)}
                       title="View Official Receipt"
-                      className="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                      className="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex"
                     >
-                      <ReceiptIcon size={15} />
+                      <ReceiptIcon size={16} />
                     </button>
                   </td>
                 </tr>
@@ -382,6 +400,15 @@ export default function Payments() {
             </tbody>
           </table>
         </div>
+        
+        {filteredPayments.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={filteredPayments.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
       {/* End of print:hidden wrapper */}
       </div>
@@ -628,7 +655,13 @@ export default function Payments() {
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">
                   <span className="text-slate-500">Recorded By:</span>
-                  <span className="text-slate-700">{receiptData.recordedBy}</span>
+                  <span className="text-slate-700">
+                    {clinicProfile.invoiceSignatoryName ? (
+                      <span>{clinicProfile.invoiceSignatoryName} {clinicProfile.invoiceSignatoryRole ? `(${clinicProfile.invoiceSignatoryRole})` : ''}</span>
+                    ) : (
+                      receiptData.recordedBy
+                    )}
+                  </span>
                 </div>
                 {receiptData.notes && (
                   <div className="flex justify-between py-1.5 border-b border-slate-100 print:border-slate-200">

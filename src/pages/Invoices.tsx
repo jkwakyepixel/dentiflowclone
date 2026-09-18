@@ -25,6 +25,8 @@ import {
 import toast from 'react-hot-toast';
 import { parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
 
+import { Pagination } from '../components/ui/Pagination';
+
 export default function Invoices() {
   const { userData } = useAuth();
   const { clinicProfile } = useClinic();
@@ -41,6 +43,9 @@ export default function Invoices() {
   const [activeTab, setActiveTab] = useState<'Invoice' | 'Quotation'>('Invoice');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
@@ -74,6 +79,8 @@ export default function Invoices() {
 
     return matchesSearch && matchesStatus && matchesPatient && matchesDate;
   });
+
+  const paginatedInvoices = filteredInvoices.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const totalOutstanding = invoices
     .filter(i => (i.type || 'Invoice') === 'Invoice')
@@ -251,7 +258,7 @@ export default function Invoices() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filteredInvoices.map((invoice: any, idx: number) => {
+              {paginatedInvoices.map((invoice: any, idx: number) => {
                 const isPaid = invoice.status === 'Paid';
                 const isPartiallyPaid = invoice.status === 'Partially Paid';
                 const isUnpaid = invoice.status === 'Unpaid';
@@ -364,10 +371,10 @@ export default function Invoices() {
                         </button>
                         <button
                           onClick={async () => {
-                            if (window.confirm('Are you sure you want to delete this invoice?')) {
+                            if (window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
                               try {
-                                await removeInvoice(invoice.id as string);
-                                toast.success('Invoice deleted');
+                                await removeInvoice(invoice.id);
+                                toast.success('Invoice deleted successfully');
                               } catch (e) {
                                 toast.error('Failed to delete invoice');
                               }
@@ -394,6 +401,15 @@ export default function Invoices() {
             </tbody>
           </table>
         </div>
+        
+        {filteredInvoices.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={filteredInvoices.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
       {/* End of print:hidden wrapper */}
       </div>
@@ -542,6 +558,19 @@ export default function Invoices() {
                       </div>
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* Signature Block */}
+              <div className="pt-12 print:pt-20 flex justify-end">
+                <div className="text-center">
+                  <div className="w-48 border-t border-slate-400 mb-2"></div>
+                  <p className="font-bold text-slate-800 text-xs print:text-sm">
+                    {clinicProfile.invoiceSignatoryName || 'Authorized Signatory'}
+                  </p>
+                  <p className="text-slate-500 text-[10px] print:text-xs">
+                    {clinicProfile.invoiceSignatoryRole || 'Clinic Staff'}
+                  </p>
                 </div>
               </div>
             </div>

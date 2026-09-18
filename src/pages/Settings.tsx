@@ -102,6 +102,9 @@ export default function Settings() {
   const [clinicAddress, setClinicAddress] = useState(clinicProfile.address);
   const [currency, setCurrency] = useState(clinicProfile.currency || 'GH₵ (Ghana Cedi)');
   const [logoPreview, setLogoPreview] = useState<string | null>(clinicProfile.logo);
+  const [invoiceSignatoryName, setInvoiceSignatoryName] = useState(clinicProfile.invoiceSignatoryName || '');
+  const [invoiceSignatoryRole, setInvoiceSignatoryRole] = useState(clinicProfile.invoiceSignatoryRole || '');
+  const [doctorsList, setDoctorsList] = useState((clinicProfile.doctors || []).join('\n'));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New / Edit Service Modal
@@ -121,6 +124,9 @@ export default function Settings() {
     setClinicEmail(clinicProfile.email);
     setClinicAddress(clinicProfile.address);
     setLogoPreview(clinicProfile.logo);
+    setInvoiceSignatoryName(clinicProfile.invoiceSignatoryName || '');
+    setInvoiceSignatoryRole(clinicProfile.invoiceSignatoryRole || '');
+    setDoctorsList((clinicProfile.doctors || []).join('\n'));
   }, [clinicProfile]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,13 +158,17 @@ export default function Settings() {
     e.preventDefault();
     setIsSavingProfile(true);
     try {
+      const doctorsArray = doctorsList.split('\n').map((d: string) => d.trim()).filter((d: string) => d.length > 0);
       await updateClinicProfile({
         name: clinicName.trim() || 'Bright Smile Dental Clinic',
         phone: clinicPhone.trim(),
         email: clinicEmail.trim(),
         address: clinicAddress.trim(),
         logo: logoPreview,
-        currency
+        currency,
+        invoiceSignatoryName: invoiceSignatoryName.trim(),
+        invoiceSignatoryRole: invoiceSignatoryRole.trim(),
+        doctors: doctorsArray
       });
       toast.success('Clinic profile updated successfully');
     } catch (err) {
@@ -429,9 +439,47 @@ export default function Settings() {
                     className="w-full border border-slate-200 rounded-xl p-2.5 bg-slate-50 text-slate-600 focus:outline-none"
                   />
                 </div>
+
+                <div className="pt-4 border-t border-slate-100">
+                  <h3 className="font-bold text-slate-800 mb-3 text-sm">Invoice Settings</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-medium text-slate-700 mb-1">Signatory Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Dr. John Doe"
+                        value={invoiceSignatoryName}
+                        onChange={(e) => setInvoiceSignatoryName(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium text-slate-700 mb-1">Signatory Role</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Lead Dentist"
+                        value={invoiceSignatoryRole}
+                        onChange={(e) => setInvoiceSignatoryRole(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100">
+                  <h3 className="font-bold text-slate-800 mb-1 text-sm">Clinic Doctors</h3>
+                  <p className="text-slate-500 mb-3">List the doctors in your clinic (one per line). These will appear in the dropdown when booking appointments or adding admissions.</p>
+                  <textarea
+                    rows={4}
+                    placeholder="Dr. Sarah Smith&#10;Dr. Michael Johnson"
+                    value={doctorsList}
+                    onChange={(e) => setDoctorsList(e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y"
+                  />
+                </div>
               </div>
 
-              <div className="pt-3 flex justify-end border-t border-slate-100">
+              <div className="pt-3 flex justify-end border-t border-slate-100 mt-6">
                 <button
                   type="submit"
                   disabled={isSavingProfile}

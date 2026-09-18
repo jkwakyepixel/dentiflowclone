@@ -14,6 +14,9 @@ export interface ClinicProfile {
   address: string;
   currency: string;
   rolePermissions?: Partial<Record<RoleType, AppPermission[]>>;
+  doctors?: string[];
+  invoiceSignatoryName?: string;
+  invoiceSignatoryRole?: string;
 }
 
 const DEFAULT_CLINIC_PROFILE: ClinicProfile = {

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parse, isToday, isThisWeek, isThisMonth, isThisYear, subMonths, isAfter } from 'date-fns';
+import { Pagination } from '../components/ui/Pagination';
 
 interface OutstandingInvoice {
   id: string;
@@ -145,6 +146,10 @@ export default function FinancialReports() {
     due: i.dueDate,
     status: i.status
   }));
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const paginatedOutstandingInvoices = outstandingInvoicesList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Group payments by date for the chart (period-filtered)
   const paymentsByDate = periodPayments.reduce((acc, p) => {
@@ -559,7 +564,7 @@ export default function FinancialReports() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {outstandingInvoicesList.map(inv => (
+              {paginatedOutstandingInvoices.map(inv => (
                 <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 font-bold text-slate-900 whitespace-nowrap">{inv.patient}</td>
                   <td className="py-3.5 font-mono text-slate-500 whitespace-nowrap">{inv.invoice}</td>
@@ -605,6 +610,15 @@ export default function FinancialReports() {
             </tbody>
           </table>
         </div>
+        
+        {outstandingInvoicesList.length > 0 && (
+          <Pagination 
+            currentPage={currentPage}
+            totalItems={outstandingInvoicesList.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
 
       <ExportModal 
