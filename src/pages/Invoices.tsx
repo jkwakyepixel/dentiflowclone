@@ -29,7 +29,7 @@ export default function Invoices() {
   const { clinicProfile } = useClinic();
   
   const navigate = useNavigate();
-  const { invoices, removeInvoice, loading: invoicesLoading } = useInvoices();
+  const { invoices, removeInvoice, editInvoice, loading: invoicesLoading } = useInvoices();
   const { patients, loading: patientsLoading } = usePatients();
   const loading = invoicesLoading || patientsLoading;
   
@@ -357,6 +357,30 @@ export default function Invoices() {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 print:hidden">
               <span className="text-xs font-bold text-slate-900 font-mono">{selectedInvoice.invoiceNumber}</span>
               <div className="flex items-center gap-2">
+                {selectedInvoice.type === 'Quotation' && (
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm('Convert this Quotation into an Invoice?')) return;
+                      const newInvoiceNumber = `${(clinicProfile as any)?.invoicePrefix || 'INV'}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`;
+                      try {
+                        await editInvoice(selectedInvoice.id, {
+                          type: 'Invoice',
+                          invoiceNumber: newInvoiceNumber,
+                          status: 'Unpaid'
+                        });
+                        toast.success('Quotation converted to Invoice!');
+                        setSelectedInvoice(null);
+                        setActiveTab('Invoice');
+                      } catch (e) {
+                        toast.error('Failed to convert quotation');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 border border-emerald-700 rounded-lg hover:bg-emerald-700 shadow-2xs"
+                  >
+                    <Check size={14} />
+                    <span>Convert to Invoice</span>
+                  </button>
+                )}
                 <button
                   onClick={() => window.print()}
                   className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-2xs"
