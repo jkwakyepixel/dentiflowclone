@@ -9,7 +9,8 @@ import {
   Plus, 
   X, 
   FileText, 
-  ArrowRight
+  ArrowRight,
+  Undo2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -238,6 +239,35 @@ export default function Admissions() {
       }
     } catch (e) {
       toast.error('Failed to end session');
+    }
+  };
+
+  const handleUndoStartSession = async (item: any) => {
+    try {
+      const updated = admissions.map(a => {
+        if (a.id === item.id) {
+          return {
+            ...a,
+            status: 'Waiting',
+            sessionStartTimestamp: undefined,
+            notes: 'Returned to waiting room'
+          };
+        }
+        return a;
+      });
+      setAdmissions(updated);
+      toast.success(`Admission reversed. ${item.patientName} is back in the waiting room.`);
+
+      if (item.isAppointment) {
+        await editAppointment(item.id, { status: 'Arrived', sessionStartTimestamp: undefined });
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+        await editAdmission(item.id, {
+          status: 'Waiting',
+          sessionStartTimestamp: undefined
+        });
+      }
+    } catch (e) {
+      toast.error('Failed to reverse admission');
     }
   };
 
@@ -512,9 +542,16 @@ export default function Admissions() {
                   {/* Actions matching reference */}
                   {isInSession ? (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[#0284c7] font-semibold text-[11px] whitespace-nowrap">
+                      <span className="text-[#0284c7] font-semibold text-[11px] whitespace-nowrap mr-1">
                         In Session: {calculatedElapsed} minutes
                       </span>
+                      <button
+                        onClick={() => handleUndoStartSession(item)}
+                        title="Reverse Admission"
+                        className="text-slate-400 hover:text-amber-500 p-1 rounded hover:bg-amber-50 transition-colors"
+                      >
+                        <Undo2 size={14} />
+                      </button>
                       <button
                         onClick={() => handleEndSession(item)}
                         className="text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 px-2 py-0.5 rounded border border-slate-200 transition-colors"
