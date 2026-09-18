@@ -27,6 +27,7 @@ export default function Payments() {
   const { clinicProfile } = useClinic();
   const [searchParams] = useSearchParams();
   const urlPatientId = searchParams.get('patientId');
+  const urlInvoiceId = searchParams.get('invoiceId');
 
   const { payments, loading: pmtsLoading, addPayment } = usePayments();
   const { invoices, loading: invsLoading } = useInvoices();
@@ -58,7 +59,7 @@ export default function Payments() {
 
   // Form State
   const [selectedPatientId, setSelectedPatientId] = useState(urlPatientId || '');
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(urlInvoiceId || '');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cash'|'Mobile Money'|'Card'|'Bank Transfer'|'Other'>('Cash');
   const [reference, setReference] = useState('');
@@ -68,17 +69,25 @@ export default function Payments() {
   const clinicId = userData?.clinicId || 'demo-clinic';
 
   useEffect(() => {
-    if (urlPatientId) {
+    if (urlInvoiceId && !invsLoading && invoices.length > 0) {
+      const inv = invoices.find(i => (i.id === urlInvoiceId) || (i.invoiceNumber === urlInvoiceId));
+      if (inv) {
+        setSelectedPatientId(inv.patientId);
+        setSelectedInvoiceId(urlInvoiceId);
+        setAmount(inv.balance.toString());
+        setIsModalOpen(true);
+      }
+    } else if (urlPatientId) {
       setSelectedPatientId(urlPatientId);
       setIsModalOpen(true);
     }
-  }, [urlPatientId]);
+  }, [urlPatientId, urlInvoiceId, invsLoading, invoices]);
 
   const activePatientInvoices = invoices.filter(i => i.patientId === selectedPatientId && i.balance > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const inv = invoices.find(i => (i.id || i.invoiceNumber) === selectedInvoiceId);
+    const inv = invoices.find(i => (i.id === selectedInvoiceId) || (i.invoiceNumber === selectedInvoiceId));
     if (!inv) {
       toast.error('Please select an invoice');
       return;
@@ -545,7 +554,7 @@ export default function Payments() {
       {/* BRANDED OFFICIAL PAYMENT RECEIPT MODAL */}
       {receiptData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto print:static print:inset-auto print:bg-transparent print:p-0 print:flex-none">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 my-auto animate-in fade-in zoom-in-95 duration-150 print:shadow-none print:border-none print:w-[148mm] print:mx-auto print:max-h-none print:overflow-visible print:animate-none">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 my-auto animate-in fade-in zoom-in-95 duration-150 print:shadow-none print:border-none print:w-[148mm] print:ml-0 print:max-h-none print:overflow-visible print:animate-none">
             {/* Modal Top Bar */}
             <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 print:hidden">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">

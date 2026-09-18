@@ -929,6 +929,15 @@ export default function PatientDetail() {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 ml-2">
+                      {(invoice.balance || 0) > 0 && (
+                        <button
+                          onClick={() => navigate(`/payments?invoiceId=${invoice.id || invoice.invoiceNumber}`)}
+                          title="Record Payment"
+                          className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-emerald-50 transition-colors"
+                        >
+                          <CreditCard size={14} />
+                        </button>
+                      )}
                       <button
                         onClick={() => navigate(`/invoices/create?edit=${invoice.id}`)}
                         title="Edit Invoice"

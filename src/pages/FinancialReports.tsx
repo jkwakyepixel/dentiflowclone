@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClinic } from '../contexts/ClinicContext';
 import { usePatients } from '../hooks/usePatients';
@@ -37,6 +38,7 @@ interface OutstandingInvoice {
 }
 
 export default function FinancialReports() {
+  const navigate = useNavigate();
   const { userData } = useAuth();
   const { clinicProfile } = useClinic();
   
@@ -553,6 +555,7 @@ export default function FinancialReports() {
                 <th className="pb-3.5 font-medium">Balance</th>
                 <th className="pb-3.5 font-medium">Due</th>
                 <th className="pb-3.5 font-medium">Status</th>
+                <th className="pb-3.5 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -580,11 +583,21 @@ export default function FinancialReports() {
                       {inv.status}
                     </span>
                   </td>
+                  <td className="py-3.5 text-right whitespace-nowrap">
+                    <button
+                      onClick={() => navigate(`/payments?invoiceId=${inv.id || inv.invoice}`)}
+                      title="Record Payment"
+                      className="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-md transition-colors font-medium text-[10px]"
+                    >
+                      <CreditCard size={13} />
+                      Pay
+                    </button>
+                  </td>
                 </tr>
               ))}
               {outstandingInvoicesList.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-slate-400">
+                  <td colSpan={9} className="py-10 text-center text-slate-400">
                     No outstanding invoices.
                   </td>
                 </tr>

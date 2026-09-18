@@ -16,10 +16,11 @@ import {
   Check, 
   Download, 
   FileText,
-  FileSpreadsheet,
   Edit2,
   Trash2,
-  Mail
+  Mail,
+  CreditCard,
+  FileSpreadsheet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
@@ -317,6 +318,15 @@ export default function Invoices() {
                     {/* Actions */}
                     <td className="py-3.5 text-right whitespace-nowrap">
                       <div className="inline-flex items-center gap-1.5">
+                        {activeTab === 'Invoice' && invoice.balance > 0 && (
+                          <button
+                            onClick={() => navigate(`/payments?invoiceId=${invoice.id || invoice.invoiceNumber}`)}
+                            title="Record Payment"
+                            className="text-slate-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-emerald-50 transition-colors"
+                          >
+                            <CreditCard size={15} />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedInvoice(invoice)}
                           title="View Invoice"
