@@ -61,7 +61,7 @@ export default function Payments() {
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cash'|'Mobile Money'|'Card'|'Bank Transfer'|'Other'>('Cash');
   const [reference, setReference] = useState('');
-  const [paymentDate, setPaymentDate] = useState('2026-08-26');
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
   const clinicId = userData?.clinicId || 'demo-clinic';
@@ -139,6 +139,7 @@ export default function Payments() {
       setSelectedInvoiceId('');
       setAmount('');
       setReference('');
+      setPaymentDate(new Date().toISOString().split('T')[0]);
       setNotes('');
     } catch (error: any) {
       toast.error(error.message || 'Failed to record payment');
