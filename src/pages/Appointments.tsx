@@ -210,7 +210,6 @@ export default function Appointments() {
         lastName: newPtLast.trim(),
         phone: newPtPhone.trim() || '+233 24 000 0000',
         gender: 'Male',
-        dateOfBirth: '01 Jan',
         email: '',
         address: '',
         allergies: '',

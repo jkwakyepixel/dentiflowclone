@@ -47,7 +47,6 @@ export interface Patient {
   recommendedBy?: string;
   phone: string;
   email?: string;
-  dateOfBirth: string;
   gender: string;
   address?: string;
   emergencyContact?: {

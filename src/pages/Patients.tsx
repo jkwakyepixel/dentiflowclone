@@ -36,7 +36,6 @@ export default function Patients() {
   const [recommendedBy, setRecommendedBy] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState('Male');
   const [address, setAddress] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
@@ -59,7 +58,6 @@ export default function Patients() {
         recommendedBy,
         phone,
         email,
-        dateOfBirth,
         gender,
         address,
         emergencyContact: {
@@ -84,7 +82,6 @@ export default function Patients() {
       setRecommendedBy('');
       setPhone(''); 
       setEmail(''); 
-      setDateOfBirth('');
       setAddress('');
       setEmergencyName('');
       setEmergencyPhone('');
@@ -222,7 +219,6 @@ export default function Patients() {
                   <th className="py-3 px-6">Patient</th>
                   <th className="py-3 px-4">Phone</th>
                   <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-4">DOB</th>
                   <th className="py-3 px-4">Gender</th>
                   <th className="py-3 px-6 text-right">Actions</th>
                 </tr>
@@ -252,9 +248,6 @@ export default function Patients() {
 
                       {/* Email */}
                       <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.email || '—'}</td>
-
-                      {/* DOB */}
-                      <td className="py-3.5 px-4 text-slate-600 font-normal whitespace-nowrap">{patient.dateOfBirth || '—'}</td>
 
                       {/* Gender */}
                       <td className="py-3.5 px-4 text-slate-600 font-normal">{patient.gender || '—'}</td>
@@ -343,10 +336,7 @@ export default function Patients() {
                   <p className="text-slate-400">Email</p>
                   <p className="font-semibold text-slate-800 mt-0.5">{selectedPatient.email || '—'}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400">Date of Birth</p>
-                  <p className="font-semibold text-slate-800 mt-0.5">{selectedPatient.dateOfBirth || '—'}</p>
-                </div>
+
                 <div>
                   <p className="text-slate-400">Gender</p>
                   <p className="font-semibold text-slate-800 mt-0.5">{selectedPatient.gender || '—'}</p>
@@ -449,7 +439,7 @@ export default function Patients() {
                 </div>
               </div>
 
-              {/* Row 3: Phone, DOB */}
+              {/* Row 3: Phone & Email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="flex gap-4 items-start">
                   <div className="mt-3 text-slate-500"><Phone size={20} /></div>
@@ -458,18 +448,10 @@ export default function Patients() {
                   </div>
                 </div>
                 <div className="flex gap-4 items-start">
-                  <div className="mt-3 text-slate-500"><CalendarIcon size={20} /></div>
+                  <div className="mt-3 text-slate-500"><Mail size={20} /></div>
                   <div className="flex-1 relative">
-                    <input type="text" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} placeholder="Date of Birth" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
-                </div>
-              </div>
-
-              {/* Row 4: Email */}
-              <div className="flex gap-4 items-start">
-                <div className="mt-3 text-slate-500"><Mail size={20} /></div>
-                <div className="flex-1 relative">
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                 </div>
               </div>
 

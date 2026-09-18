@@ -85,7 +85,6 @@ export default function PatientDetail() {
     lastName: '',
     phone: '',
     email: '',
-    dateOfBirth: '',
     gender: 'Male',
     address: '',
     emergencyContactName: '',
@@ -271,7 +270,6 @@ export default function PatientDetail() {
       lastName: patient.lastName || '',
       phone: patient.phone || '',
       email: patient.email || '',
-      dateOfBirth: patient.dateOfBirth || '',
       gender: patient.gender || 'Male',
       address: patient.address || '',
       emergencyContactName: patient.emergencyContact?.name || '',
@@ -293,7 +291,6 @@ export default function PatientDetail() {
         lastName: editFormData.lastName,
         phone: editFormData.phone,
         email: editFormData.email,
-        dateOfBirth: editFormData.dateOfBirth,
         gender: editFormData.gender,
         address: editFormData.address,
         allergies: editFormData.allergies,
@@ -362,10 +359,6 @@ export default function PatientDetail() {
               <span className="inline-flex items-center gap-1">
                 <Mail size={13} className="text-slate-400" />
                 {patient.email || 'No email'}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Cake size={13} className="text-slate-400" />
-                {patient.dateOfBirth || 'No DOB'}
               </span>
             </div>
           </div>
@@ -1313,16 +1306,6 @@ export default function PatientDetail() {
                       type="email" 
                       value={editFormData.email} 
                       onChange={e => setEditFormData({...editFormData, email: e.target.value})} 
-                      className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-slate-700 mb-1">Date of Birth</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. 14 Mar 1985"
-                      value={editFormData.dateOfBirth} 
-                      onChange={e => setEditFormData({...editFormData, dateOfBirth: e.target.value})} 
                       className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" 
                     />
                   </div>
