@@ -144,48 +144,48 @@ export default function Invoices() {
 
       {/* KPI Cards (Only show when Invoices tab is active) */}
       {activeTab === 'Invoice' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
-              <FileText size={22} className="stroke-[2.5]" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
+              <FileText size={20} className="stroke-[2.5]" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Total Invoiced</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
-              <Check size={22} className="stroke-[2.5]" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Amount Collected</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Total Invoiced</p>
+              <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">GH₵ {kpiTotalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
-              <FileText size={22} className="stroke-[2.5]" />
+          <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
+              <Check size={20} className="stroke-[2.5]" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Total Outstanding</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">GH₵ {kpiTotalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Collected</p>
+              <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">GH₵ {kpiTotalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#fef2f2] text-[#ef4444] flex items-center justify-center flex-shrink-0">
-              <span className="font-bold text-xl">{kpiOverdueCount}</span>
+          <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
+              <FileText size={20} className="stroke-[2.5]" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Overdue Invoices</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">Requires Action</p>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Outstanding</p>
+              <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">GH₵ {kpiTotalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#fef2f2] text-[#ef4444] flex items-center justify-center flex-shrink-0">
+              <span className="font-bold text-base sm:text-xl">{kpiOverdueCount}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Overdue</p>
+              <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">Action Needed</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Search & Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
         {/* Search input */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -194,16 +194,16 @@ export default function Invoices() {
             placeholder="Search by invoice number or patient..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
           />
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Date Filter */}
           <select
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
           >
             <option value="All Time">All Time</option>
             <option value="Today">Today</option>
@@ -216,7 +216,7 @@ export default function Invoices() {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
           >
             <option value="All">All statuses</option>
             <option value="Paid">Paid</option>
@@ -230,7 +230,7 @@ export default function Invoices() {
           <select
             value={patientFilter}
             onChange={e => setPatientFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
           >
             <option value="All">All patients</option>
             {patientOptions.map(p => (
@@ -241,8 +241,8 @@ export default function Invoices() {
       </div>
 
       {/* Invoices Table Card */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+        <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="text-slate-400 font-medium border-b border-slate-100">

@@ -161,11 +161,12 @@ export const AppLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible">
         {/* Top Navbar */}
-        <header className="h-16 px-6 md:px-8 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0 print:hidden">
-          <div className="flex items-center gap-4">
+        <header className="h-16 px-4 sm:px-6 md:px-8 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0 print:hidden">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <button 
-              className="md:hidden text-slate-500 hover:text-slate-700 p-1 -ml-1"
+              className="md:hidden text-slate-500 hover:text-slate-700 p-1.5 -ml-1 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition-colors"
               onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open Menu"
             >
               <Menu size={22} />
             </button>
@@ -176,13 +177,16 @@ export const AppLayout = () => {
             >
               <Menu size={22} />
             </button>
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">
               <CalendarIcon size={14} className="text-slate-400" />
               <span>{currentDate}</span>
             </div>
+            <div className="flex sm:hidden items-center gap-1.5 text-xs font-semibold text-slate-800 truncate">
+              <span className="truncate">{clinicProfile.name || 'Dentiflow'}</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0">
             {/* Profile Avatar & Name */}
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#dc2626] text-white flex items-center justify-center font-bold text-xs shadow-xs">
@@ -196,11 +200,37 @@ export const AppLayout = () => {
         </header>
 
         {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-6 md:p-8 print:overflow-visible print:bg-white print:p-0">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-3.5 sm:p-6 md:p-8 pb-24 md:pb-8 print:overflow-visible print:bg-white print:p-0">
           <div className="max-w-7xl mx-auto print:max-w-none">
             <Outlet />
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-1.5 py-1 flex items-center justify-around shadow-[0_-2px_12px_rgba(0,0,0,0.04)] print:hidden">
+          {visibleNavItems
+            .filter(item => ['Dashboard', 'Admissions', 'Appointments', 'Patients', 'Invoices'].includes(item.name))
+            .map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
+                    isActive 
+                      ? 'text-[#2563eb] font-bold' 
+                      : 'text-slate-500 hover:text-slate-800 font-medium'
+                  }`}
+                >
+                  <div className={`p-1 rounded-lg ${isActive ? 'bg-blue-50 text-[#2563eb]' : ''}`}>
+                    <Icon size={18} className={isActive ? 'text-[#2563eb]' : 'text-slate-500'} />
+                  </div>
+                  <span className="text-[10px] mt-0.5 tracking-tight">{item.name}</span>
+                </Link>
+              );
+            })}
+        </nav>
       </div>
     </div>
   );

@@ -341,17 +341,17 @@ export default function PatientDetail() {
       </div>
 
       {/* 2. Top Patient Card matching original UI */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-[#1e293b] text-white font-bold text-lg flex items-center justify-center flex-shrink-0 shadow-xs">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#1e293b] text-white font-bold text-base sm:text-lg flex items-center justify-center flex-shrink-0 shadow-xs">
             {patientInitials}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900">{patientFullName}</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900">{patientFullName}</h1>
               <span className="text-xs text-slate-400 font-mono">{patient.patientId || 'PAT-0001'}</span>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-1">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 mt-1">
               <span className="inline-flex items-center gap-1">
                 <Phone size={13} className="text-slate-400" />
                 {patient.phone || 'No phone'}
@@ -365,10 +365,10 @@ export default function PatientDetail() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto">
+        <div className="flex items-center gap-2 flex-wrap self-stretch sm:self-auto">
           <button 
             onClick={() => navigate(`/appointments?patientId=${patient.id || id}&book=true`)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
           >
             <CalendarIcon size={14} />
             <span>Book Appointment</span>
@@ -376,7 +376,7 @@ export default function PatientDetail() {
 
           <button 
             onClick={() => navigate(`/invoices/create?patientId=${patient.id || id}`)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
           >
             <FileText size={14} />
             <span>Create Invoice</span>
@@ -384,7 +384,7 @@ export default function PatientDetail() {
 
           <button 
             onClick={() => navigate(`/payments?patientId=${patient.id || id}`)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#2563eb] text-white hover:bg-blue-700 shadow-xs transition-colors"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#2563eb] text-white hover:bg-blue-700 shadow-xs transition-colors"
           >
             <CreditCard size={14} />
             <span>Record Payment</span>
@@ -393,7 +393,7 @@ export default function PatientDetail() {
       </div>
 
       {/* 3. Pill Tabs matching original UI */}
-      <div className="inline-flex bg-slate-100/90 p-1 rounded-2xl gap-1 text-xs font-medium overflow-x-auto max-w-full">
+      <div className="flex bg-slate-100/90 p-1 rounded-2xl gap-1 text-xs font-medium overflow-x-auto max-w-full no-scrollbar">
         <button
           onClick={() => setActiveTab('overview')}
           className={`px-4 py-2 rounded-xl transition-all whitespace-nowrap ${
@@ -487,14 +487,14 @@ export default function PatientDetail() {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Personal Information Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4 relative group">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4 relative group">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-900">Personal Information</h2>
                 <button 
                   onClick={handleOpenEditModal}
-                  className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all absolute right-4 top-4"
+                  className="text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all absolute right-4 top-4"
                   title="Edit Patient Information"
                 >
                   <Edit2 size={14} />
@@ -525,7 +525,7 @@ export default function PatientDetail() {
             </div>
 
             {/* Medical & Dental Notes Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4">
               <h2 className="text-sm font-bold text-slate-900">Medical & Dental Notes</h2>
               <div className="space-y-3.5 text-xs">
                 <div>
@@ -545,16 +545,16 @@ export default function PatientDetail() {
           </div>
 
           {/* Right Column (1/3) */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Balance Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-2">
               <h2 className="text-xs text-slate-400 font-medium">Balance</h2>
               <p className="text-2xl font-bold text-red-600">GH₵ {calculatedBalance.toFixed(2)}</p>
               <p className="text-xs text-slate-400">Outstanding balance</p>
             </div>
 
             {/* Appointments Card */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-3 text-xs">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-3 text-xs">
               <h2 className="text-sm font-bold text-slate-900">Appointments</h2>
               <div>
                 <span className="text-slate-400 font-medium block">Last appointment</span>

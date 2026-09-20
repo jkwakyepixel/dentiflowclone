@@ -180,16 +180,16 @@ export default function Patients() {
             placeholder="Search by name, phone or ID..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
           />
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Contact Filter */}
           <select
             value={contactFilter}
             onChange={e => setContactFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
           >
             <option value="All">All Contacts</option>
             <option value="Has Phone">Has Phone</option>
@@ -201,7 +201,7 @@ export default function Patients() {
           <select
             value={genderFilter}
             onChange={e => setGenderFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer"
           >
             <option value="All genders">All genders</option>
             <option value="Male">Male</option>
@@ -211,8 +211,102 @@ export default function Patients() {
         </div>
       </div>
 
-      {/* Patients Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
+      {/* Mobile Patients Card View (< md) */}
+      <div className="md:hidden space-y-3">
+        {filteredPatients.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center text-slate-500 text-xs">
+            No patients match your search or filter criteria.
+          </div>
+        ) : (
+          paginatedPatients.map((patient, index: number) => {
+            const initials = `${patient.firstName?.[0] || ''}${patient.lastName?.[0] || ''}`.toUpperCase() || 'P';
+            const avatarBg = getAvatarColor(index);
+
+            return (
+              <div key={patient.id} className="bg-white rounded-2xl border border-slate-100/90 p-4 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Link to={`/patients/${patient.id}`} className="flex items-center gap-3 min-w-0">
+                    <div className={`w-10 h-10 rounded-full ${avatarBg} flex items-center justify-center font-bold text-xs flex-shrink-0 border border-black/5 shadow-2xs`}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate">{patient.firstName} {patient.lastName}</p>
+                      <p className="text-[11px] text-slate-400 font-mono">{patient.patientId}</p>
+                    </div>
+                  </Link>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0 ${
+                    patient.gender === 'Male' ? 'bg-blue-50 text-blue-600' :
+                    patient.gender === 'Female' ? 'bg-pink-50 text-pink-600' :
+                    'bg-slate-100 text-slate-600'
+                  }`}>
+                    {patient.gender || 'Unknown'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-1.5 text-xs text-slate-600 pt-1 border-t border-slate-50">
+                  {patient.phone ? (
+                    <a href={`tel:${patient.phone}`} className="flex items-center gap-2 text-slate-700 hover:text-blue-600 py-0.5">
+                      <Phone size={13} className="text-slate-400 flex-shrink-0" />
+                      <span className="font-medium">{patient.phone}</span>
+                    </a>
+                  ) : (
+                    <span className="text-slate-400 italic text-[11px]">No phone</span>
+                  )}
+                  {patient.email && (
+                    <div className="flex items-center gap-2 text-slate-600 truncate py-0.5">
+                      <Mail size={13} className="text-slate-400 flex-shrink-0" />
+                      <span className="truncate">{patient.email}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-50">
+                  <Link 
+                    to={`/patients/${patient.id}`}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Eye size={14} />
+                    <span>View</span>
+                  </Link>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/invoices');
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50/70 hover:bg-emerald-100/70 rounded-lg transition-colors"
+                  >
+                    <FileText size={14} />
+                    <span>Invoice</span>
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/appointments');
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-purple-600 bg-purple-50/70 hover:bg-purple-100/70 rounded-lg transition-colors"
+                  >
+                    <CalendarIcon size={14} />
+                    <span>Book</span>
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete(patient.id as string, `${patient.firstName} ${patient.lastName}`);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-red-600 bg-slate-50 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Patient"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Patients Table Card (>= md) */}
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
         <div className="overflow-x-auto">
           {filteredPatients.length === 0 ? (
             <div className="py-12 text-center text-slate-500 text-sm">
@@ -286,7 +380,7 @@ export default function Patients() {
 
                       {/* Actions */}
                       <td className="py-3.5 px-6">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <Link 
                             to={`/patients/${patient.id}`}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -334,16 +428,16 @@ export default function Patients() {
             </table>
           )}
         </div>
-        
-        {filteredPatients.length > 0 && (
-          <Pagination 
-            currentPage={currentPage}
-            totalItems={filteredPatients.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-          />
-        )}
       </div>
+
+      {filteredPatients.length > 0 && (
+        <Pagination 
+          currentPage={currentPage}
+          totalItems={filteredPatients.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       {/* View Patient Details Modal */}
       {selectedPatient && (
@@ -442,11 +536,11 @@ export default function Patients() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-8 text-sm">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-5 sm:space-y-8 text-sm">
               {/* Row 1: Salutation, First Name, Last Name */}
-              <div className="flex gap-4 items-start">
+              <div className="flex gap-3 sm:gap-4 items-start">
                 <div className="mt-3 text-blue-600"><User size={20} /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 flex-1">
                   <div className="relative">
                     <input type="text" value={salutation} onChange={e => setSalutation(e.target.value)} placeholder="Salutation" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
@@ -460,9 +554,9 @@ export default function Patients() {
               </div>
 
               {/* Row 2: Gender, Middle Name, Recommended By */}
-              <div className="flex gap-4 items-start">
+              <div className="flex gap-3 sm:gap-4 items-start">
                 <div className="mt-3 text-slate-500"><FileText size={20} /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 flex-1">
                   <div className="relative">
                     <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 text-slate-700 appearance-none cursor-pointer">
                       <option value="" disabled hidden>Gender</option>
@@ -481,14 +575,14 @@ export default function Patients() {
               </div>
 
               {/* Row 3: Phone & Email */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex gap-4 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+                <div className="flex gap-3 sm:gap-4 items-start">
                   <div className="mt-3 text-slate-500"><Phone size={20} /></div>
                   <div className="flex-1 relative">
                     <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone Number *" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
                 </div>
-                <div className="flex gap-4 items-start">
+                <div className="flex gap-3 sm:gap-4 items-start">
                   <div className="mt-3 text-slate-500"><Mail size={20} /></div>
                   <div className="flex-1 relative">
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
@@ -497,7 +591,7 @@ export default function Patients() {
               </div>
 
               {/* Row 5: Address */}
-              <div className="flex gap-4 items-start">
+              <div className="flex gap-3 sm:gap-4 items-start">
                 <div className="mt-3 text-slate-500"><MapPin size={20} /></div>
                 <div className="flex-1 relative">
                   <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
@@ -505,17 +599,17 @@ export default function Patients() {
               </div>
 
               {/* Row 6: Clinic Note */}
-              <div className="flex gap-4 items-start">
+              <div className="flex gap-3 sm:gap-4 items-start">
                 <div className="mt-3 text-slate-500"><ClipboardList size={20} /></div>
                 <div className="flex-1 relative">
                   <input type="text" value={medicalNotes} onChange={e => setMedicalNotes(e.target.value)} placeholder="Clinic Note" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                 </div>
               </div>
               
-              {/* Other Fields (Hidden in screenshot but necessary) */}
-              <div className="pt-8 mt-4 border-t border-slate-200/60">
+              {/* Other Fields */}
+              <div className="pt-6 sm:pt-8 mt-4 border-t border-slate-200/60">
                 <h4 className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">Additional Information</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 sm:gap-y-6">
                   <div className="relative">
                     <input type="text" value={allergies} onChange={e => setAllergies(e.target.value)} placeholder="Allergies (e.g. Penicillin, Latex)" className="w-full bg-transparent border-b border-slate-300 rounded-none px-0 py-2 focus:outline-none focus:border-blue-500 placeholder-slate-400" />
                   </div>
@@ -532,11 +626,11 @@ export default function Patients() {
               </div>
 
               {/* Footer */}
-              <div className="pt-4 flex items-center justify-end gap-3 mt-8">
+              <div className="pt-4 flex items-center justify-end gap-3 mt-6 sm:mt-8">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+                  className="px-5 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
                 >
                   CANCEL
                 </button>

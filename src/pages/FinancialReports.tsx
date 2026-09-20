@@ -227,7 +227,7 @@ export default function FinancialReports() {
 
         <div className="flex items-center gap-3 flex-wrap">
           {/* Period Pills */}
-          <div className="inline-flex bg-slate-100/90 p-1 rounded-2xl gap-1 text-xs font-medium overflow-x-auto shadow-2xs">
+          <div className="flex bg-slate-100/90 p-1 rounded-2xl gap-1 text-xs font-medium overflow-x-auto max-w-full no-scrollbar shadow-2xs">
             {periods.map(period => (
               <button
                 key={period}
@@ -257,56 +257,56 @@ export default function FinancialReports() {
       </div>
 
       {/* 2. Lifetime Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Invoiced (All Time) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
-              <FileText size={20} className="stroke-[2.5]" />
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
+              <FileText size={18} className="stroke-[2.5]" />
             </div>
-            <p className="text-xs text-slate-400 font-medium">Total Invoiced</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Total Invoiced</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">GH₵ {totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-slate-400 mt-1">All time · {allInvoices.length} invoices</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">All time · {allInvoices.length} inv</p>
         </div>
 
         {/* Total Collected (All Time) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
-              <DollarSign size={20} className="stroke-[2.5]" />
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
+              <DollarSign size={18} className="stroke-[2.5]" />
             </div>
-            <p className="text-xs text-slate-400 font-medium">Total Collected</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Collected</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">GH₵ {totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-slate-400 mt-1">
-            {collectionRate.toFixed(0)}% collection rate · {payments.length} payments
+          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
+            {collectionRate.toFixed(0)}% rate · {payments.length} pmts
           </p>
         </div>
 
         {/* Total Outstanding (All Time) */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
-              <AlertCircle size={20} className="stroke-[2.5]" />
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
+              <AlertCircle size={18} className="stroke-[2.5]" />
             </div>
-            <p className="text-xs text-slate-400 font-medium">Outstanding Balance</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Outstanding</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-slate-400 mt-1">{outstandingInvoicesList.length} unpaid invoices</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">{outstandingInvoicesList.length} unpaid inv</p>
         </div>
 
         {/* Period Activity Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-[#f0fdfa] text-[#14b8a6] flex items-center justify-center flex-shrink-0">
-              <TrendingUp size={20} className="stroke-[2.5]" />
+        <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#f0fdfa] text-[#14b8a6] flex items-center justify-center flex-shrink-0">
+              <TrendingUp size={18} className="stroke-[2.5]" />
             </div>
-            <p className="text-xs text-slate-400 font-medium">{selectedPeriod} Activity</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">{selectedPeriod}</p>
           </div>
-          <p className="text-xl font-bold text-slate-900">GH₵ {periodRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-slate-400 mt-1">
-            {periodTransactions} payments · {periodInvoices.length} invoices
+          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {periodRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
+            {periodTransactions} pmts · {periodInvoices.length} inv
           </p>
         </div>
       </div>

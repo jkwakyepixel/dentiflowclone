@@ -12,7 +12,8 @@ import {
   X, 
   FileText, 
   ArrowRight,
-  Undo2
+  Undo2,
+  Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -358,89 +359,230 @@ export default function Admissions() {
 
   return (
     <div className="space-y-4 pb-12">
-      {/* Top Header Bar matching reference */}
-      <div className="flex items-center justify-between">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-slate-800 tracking-tight">Admissions</h1>
-        <div className="relative w-64">
+        <div className="relative w-full sm:w-64">
           <input
             type="text"
-            placeholder="Search Patients"
-            className="w-full bg-white border border-slate-200/90 rounded-lg px-3.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+            placeholder="Search Patients..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
           />
         </div>
       </div>
 
       {/* Main Admissions Card */}
-      <div className="bg-white rounded-2xl p-7 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-7">
+      <div className="bg-white rounded-2xl p-4 sm:p-7 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-7">
         <h2 className="text-sm font-bold text-slate-900">Live Waiting Room View</h2>
 
-        {/* 8 Metric Stats Bar */}
-        <div className="grid grid-cols-8 text-center gap-2">
+        {/* 8 Metric Stats Bar (4 columns on mobile, 8 on tablet/desktop) */}
+        <div className="grid grid-cols-4 sm:grid-cols-8 text-center gap-3 sm:gap-2 bg-slate-50/60 p-3 sm:p-4 rounded-xl border border-slate-100">
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{scheduledCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">Scheduled</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{scheduledCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">Scheduled</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{inSessionCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">In Session</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{inSessionCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">In Session</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{waitingCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">Waiting</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{waitingCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">Waiting</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{lateCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">Late</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{lateCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">Late</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{noShowCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">No Show</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{noShowCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">No Show</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{canceledCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">Canceled</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{canceledCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">Canceled</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-[#0284c7]">{endedCount}</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">Ended</p>
+            <p className="text-lg sm:text-xl font-bold text-[#0284c7]">{endedCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium mt-0.5">Ended</p>
           </div>
 
           <div>
-            <p className="text-xl font-bold text-slate-900">{totalCount}</p>
-            <p className="text-[11px] text-slate-900 font-bold mt-1">Total</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-900">{totalCount}</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-900 font-bold mt-0.5">Total</p>
           </div>
         </div>
 
         {/* Search Bar & + Add Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
               type="text"
-              placeholder="Search by Patient, Doctor, or Timestamp. Press F for Quick Search"
+              placeholder="Search in waiting room..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-[#f8fafc] border border-slate-200/80 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full bg-white border border-slate-200/90 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
             />
           </div>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 bg-[#0284c7] hover:bg-sky-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-xs transition-colors flex-shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 bg-[#0284c7] hover:bg-sky-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs transition-colors flex-shrink-0"
           >
             <Plus size={15} />
-            <span>Add</span>
+            <span>Add Patient</span>
           </button>
         </div>
 
-        {/* Live Queue Table with 100% Fluid Layout (No Horizontal Scroll) */}
-        <div className="divide-y divide-slate-100 text-xs">
+        {/* MOBILE VIEW (< md): Responsive touch cards */}
+        <div className="md:hidden space-y-3">
+          {filteredAdmissions.map((item) => {
+            const isLate = item.status === 'Late';
+            const isInSession = item.status === 'In Session';
+            const isEnded = item.status === 'Ended';
+            const isWaiting = item.status === 'Waiting';
+            const isScheduled = item.status === 'Scheduled';
+            const isCanceled = item.status === 'Canceled';
+            const isNoShow = item.status === 'No Show';
+
+            const times = item.scheduledTime ? item.scheduledTime.split('\n') : ['1:00 PM', '1:30 PM'];
+            const startT = times[0] || '1:00 PM';
+            const endT = times[1] || '1:30 PM';
+
+            let calculatedElapsed = item.elapsedMin || 0;
+            if (isInSession && item.sessionStartTimestamp) {
+              calculatedElapsed = Math.floor((currentTime - item.sessionStartTimestamp) / 60000);
+            }
+            if (isInSession && calculatedElapsed < 1) calculatedElapsed = 1;
+
+            return (
+              <div
+                key={`mob-${item.id}`}
+                className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/40 hover:bg-slate-50 transition-colors space-y-3 shadow-2xs"
+              >
+                {/* Header: Time & Status */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <Clock size={13} className="text-slate-400" />
+                    <span>{startT} – {endT}</span>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    isInSession ? 'bg-sky-50 text-[#0284c7] border border-sky-200' :
+                    isWaiting ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                    isLate ? 'bg-red-50 text-red-600 border border-red-200' :
+                    isScheduled ? 'bg-blue-50 text-blue-600 border border-blue-200' :
+                    isEnded ? 'bg-slate-100 text-slate-600' :
+                    'bg-slate-100 text-slate-500'
+                  }`}>
+                    {isInSession ? `In Session (${calculatedElapsed}m)` : item.status}
+                  </span>
+                </div>
+
+                {/* Patient Info */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-1 h-10 rounded-full bg-[#0284c7] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm">{item.patientName}</h3>
+                      <p className="text-xs text-[#0284c7] font-medium mt-0.5">
+                        {item.dentist} · <span className="text-slate-400 font-normal">{item.room || 'Surgery Room 1'}</span>
+                      </p>
+                      {item.notes && <p className="text-[11px] text-slate-400 italic mt-0.5">{item.notes}</p>}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (item.patientId && item.patientId !== 'p-gen') {
+                        navigate(`/patients/${item.patientId}?tab=notes`);
+                      } else {
+                        toast.error('Cannot view notes for unregistered patient');
+                      }
+                    }}
+                    title="Clinical Notes"
+                    className="p-2 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-600"
+                  >
+                    <FileText size={15} />
+                  </button>
+                </div>
+
+                {/* Action Buttons with high-touch targets */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2 flex-wrap">
+                  {isInSession ? (
+                    <div className="flex items-center gap-2 w-full justify-between">
+                      <button
+                        onClick={() => handleUndoStartSession(item)}
+                        title="Reverse Admission"
+                        className="inline-flex items-center gap-1 text-slate-500 hover:text-amber-600 p-2 rounded-lg bg-white border border-slate-200 text-xs font-medium"
+                      >
+                        <Undo2 size={14} />
+                        <span>Undo</span>
+                      </button>
+                      <button
+                        onClick={() => handleEndSession(item)}
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-bold transition-colors"
+                      >
+                        End Session
+                      </button>
+                    </div>
+                  ) : isEnded || isCanceled || isNoShow ? (
+                    <span className="text-slate-400 text-xs py-1">Session {item.status}</span>
+                  ) : isScheduled ? (
+                    <div className="flex items-center gap-2 w-full justify-between">
+                      <button
+                        onClick={() => handleCancel(item)}
+                        className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleMarkArrived(item)}
+                        className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-bold"
+                      >
+                        Mark Arrived
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 w-full justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleCancel(item)}
+                          className="px-2.5 py-1.5 text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-lg"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleNoShow(item)}
+                          className="px-2.5 py-1.5 text-xs font-medium text-red-500 bg-white border border-slate-200 rounded-lg"
+                        >
+                          No Show
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => handleCallIn(item)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0284c7] hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-2xs"
+                      >
+                        <span>Admit to Surgery</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* DESKTOP VIEW (md: and up): Multi-Column Fluid Table */}
+        <div className="hidden md:block divide-y divide-slate-100 text-xs">
           {filteredAdmissions.map((item) => {
             const isLate = item.status === 'Late';
             const isInSession = item.status === 'In Session';
@@ -614,13 +756,13 @@ export default function Admissions() {
               </div>
             );
           })}
-
-          {filteredAdmissions.length === 0 && (
-            <div className="py-12 text-center text-slate-400">
-              No patients in waiting room today.
-            </div>
-          )}
         </div>
+
+        {filteredAdmissions.length === 0 && (
+          <div className="py-12 text-center text-slate-400 text-xs">
+            No patients in waiting room today.
+          </div>
+        )}
       </div>
 
       {/* Add Walk-in / Admission Modal */}

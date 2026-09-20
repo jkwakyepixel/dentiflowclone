@@ -364,12 +364,12 @@ export default function Appointments() {
             placeholder="Search by patient or type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
           />
         </div>
 
         {/* Calendar Nav & View Tabs */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Today Button & Chevron Nav */}
           <div className="flex items-center bg-white border border-slate-200/90 rounded-xl p-1 shadow-2xs">
             <button
@@ -398,7 +398,7 @@ export default function Appointments() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs cursor-pointer"
           >
             <option value="All">All statuses</option>
             <option value="Confirmed">Confirmed (In Session)</option>
@@ -456,110 +456,110 @@ export default function Appointments() {
       </div>
 
       {/* Main Calendar View Box */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
         {/* Dynamic Date Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
             {getHeaderTitle()}
           </h2>
-          <span className="text-xs text-slate-400 font-medium">
-            {filteredAppointments.length} matching events
+          <span className="text-xs text-slate-400 font-medium whitespace-nowrap ml-2">
+            {filteredAppointments.length} events
           </span>
         </div>
 
         {/* 1. MONTH VIEW */}
         {viewMode === 'month' && (
-          <div>
-            <div className="grid grid-cols-7 gap-2 text-center text-xs font-medium text-slate-400 mb-2">
-              <div>Sun</div>
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
-            </div>
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="min-w-[650px]">
+              <div className="grid grid-cols-7 gap-2 text-center text-xs font-medium text-slate-400 mb-2">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+              </div>
 
-            <div className="grid grid-cols-7 gap-2">
-              {monthDays.map((dayItem, idx) => {
-                const isCurrentMonth = isSameMonth(dayItem, currentDate);
-                const dayFormatted = format(dayItem, 'yyyy-MM-dd');
-                const isTodayDate = isSameDay(dayItem, new Date());
-                const dayAppts = filteredAppointments.filter(a => a.date === dayFormatted);
+              <div className="grid grid-cols-7 gap-2">
+                {monthDays.map((dayItem, idx) => {
+                  const isCurrentMonth = isSameMonth(dayItem, currentDate);
+                  const dayFormatted = format(dayItem, 'yyyy-MM-dd');
+                  const isTodayDate = isSameDay(dayItem, new Date());
+                  const dayAppts = filteredAppointments.filter(a => a.date === dayFormatted);
 
-                if (!isCurrentMonth) {
+                  if (!isCurrentMonth) {
+                    return (
+                      <div 
+                        key={idx} 
+                        className="min-h-[100px] p-2 rounded-xl bg-slate-50/40 border border-slate-50/60 opacity-40"
+                      />
+                    );
+                  }
+
                   return (
-                    <div 
-                      key={idx} 
-                      className="min-h-[100px] p-2 rounded-xl bg-slate-50/40 border border-slate-50/60 opacity-40"
-                    />
-                  );
-                }
-
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      setCurrentDate(dayItem);
-                      setViewMode('day');
-                    }}
-                    className={`min-h-[105px] p-2 rounded-xl border flex flex-col justify-between transition-all cursor-pointer group ${
-                      isTodayDate
-                        ? 'bg-blue-50/40 border-blue-200'
-                        : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-xs'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      {isTodayDate ? (
-                        <span className="w-5 h-5 rounded-full bg-[#2563eb] text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
+                    <div
+                      key={idx}
+                      onClick={() => handleQuickSlotClick(dayFormatted, '08:30')}
+                      className={`min-h-[100px] p-2 rounded-xl border transition-all cursor-pointer flex flex-col justify-between group ${
+                        isTodayDate 
+                          ? 'bg-blue-50/20 border-blue-200 shadow-2xs' 
+                          : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-xs'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
+                          isTodayDate ? 'bg-[#2563eb] text-white' : 'text-slate-700'
+                        }`}>
                           {format(dayItem, 'd')}
                         </span>
-                      ) : (
-                        <span className="text-xs font-semibold text-slate-700 group-hover:text-blue-600">
-                          {format(dayItem, 'd')}
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuickSlotClick(dayFormatted, '08:30');
-                        }}
-                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 p-0.5"
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
-
-                    <div className="space-y-1 overflow-hidden flex-1">
-                      {dayAppts.slice(0, 2).map((appt) => (
-                        <div
-                          key={appt.id}
+                        {dayAppts.length > 0 && (
+                          <span className="text-[10px] font-bold text-[#2563eb] bg-blue-50 px-1.5 py-0.5 rounded-full">
+                            {dayAppts.length}
+                          </span>
+                        )}
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedAppt(appt);
+                            handleQuickSlotClick(dayFormatted, '08:30');
                           }}
-                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium truncate flex items-center gap-1 shadow-2xs border-l-2 ${getStatusStyle(appt.status)}`}
+                          className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 p-0.5"
                         >
-                          <span className="font-normal opacity-80">{appt.startTime}</span>
-                          <span className="truncate">{appt.patientName}</span>
-                        </div>
-                      ))}
-                      {dayAppts.length > 2 && (
-                        <div className="text-[10px] text-slate-400 font-medium pl-1">
-                          + {dayAppts.length - 2} more
-                        </div>
-                      )}
+                          <Plus size={13} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-1 overflow-hidden flex-1">
+                        {dayAppts.slice(0, 2).map((appt) => (
+                          <div
+                            key={appt.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAppt(appt);
+                            }}
+                            className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium truncate flex items-center gap-1 shadow-2xs border-l-2 ${getStatusStyle(appt.status)}`}
+                          >
+                            <span className="font-normal opacity-80">{appt.startTime}</span>
+                            <span className="truncate">{appt.patientName}</span>
+                          </div>
+                        ))}
+                        {dayAppts.length > 2 && (
+                          <div className="text-[10px] text-slate-400 font-medium pl-1">
+                            + {dayAppts.length - 2} more
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
         {/* 2. WEEK VIEW */}
         {viewMode === 'week' && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto no-scrollbar">
             <div className="min-w-[750px]">
               <div className="grid grid-cols-8 border-b border-slate-100 pb-3">
                 <div className="text-xs font-medium text-slate-400 text-center flex items-center justify-center">
