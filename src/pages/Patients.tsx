@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePatients } from '../hooks/usePatients';
 import type { Patient } from '../types';
@@ -48,9 +48,13 @@ export default function Patients() {
   const [allergies, setAllergies] = useState('');
   const [medicalNotes, setMedicalNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const submittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Synchronous guard — prevents double-clicks / double-submits
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
 
     try {
@@ -95,6 +99,7 @@ export default function Patients() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to create patient');
     } finally {
+      submittingRef.current = false;
       setSaving(false);
     }
   };
