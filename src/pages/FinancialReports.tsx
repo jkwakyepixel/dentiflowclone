@@ -56,10 +56,10 @@ export default function FinancialReports() {
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
-  const handleExportExcel = (selectedMonth: string) => {
+  const handleExportExcel = async (selectedMonth: string) => {
     try {
       setIsExporting(true);
-      exportFinancialTrackerExcel(
+      await exportFinancialTrackerExcel(
         clinicProfile.name || 'Bright Smile Dental Clinic',
         patients,
         invoices,
