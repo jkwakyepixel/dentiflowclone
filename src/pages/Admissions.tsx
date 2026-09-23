@@ -13,7 +13,8 @@ import {
   FileText, 
   ArrowRight,
   Undo2,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -82,8 +83,8 @@ const DEFAULT_SAMPLE_ADMISSIONS: (Admission & { elapsedMin?: number; date?: stri
 export default function Admissions() {
   const { userData } = useAuth();
   const navigate = useNavigate();
-  const { admissions: dbAdmissions, addAdmission, editAdmission } = useAdmissions();
-  const { appointments: dbAppts, editAppointment } = useAppointments();
+  const { admissions: dbAdmissions, editAdmission, removeAdmission } = useAdmissions();
+  const { appointments: dbAppts, editAppointment, addAppointment, removeAppointment } = useAppointments();
   const { clinicProfile } = useClinic();
   const { patients } = usePatients();
   
@@ -100,7 +101,7 @@ export default function Admissions() {
 
   // Quick Admit Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [patientNameInput, setPatientNameInput] = useState('');
+  const [patientIdInput, setPatientIdInput] = useState('');
   const [dentistInput, setDentistInput] = useState('Dr. Sarah Smith');
   const [roomInput, setRoomInput] = useState('Surgery Room 1');
   const [startTimeInput, setStartTimeInput] = useState('2:30 PM');
@@ -318,29 +319,52 @@ export default function Admissions() {
     }
   };
 
+  const handleDelete = async (item: any) => {
+    if (!window.confirm(`Are you sure you want to delete this admission for ${item.patientName}?`)) return;
+    try {
+      if (item.isAppointment) {
+        await removeAppointment(item.id);
+      } else if (item.id && !item.id.startsWith('adm-') && !item.id.startsWith('app-')) {
+        await removeAdmission(item.id);
+      }
+      setAdmissions(prev => prev.filter(a => a.id !== item.id));
+      toast.success('Deleted successfully');
+    } catch (e) {
+      toast.error('Failed to delete');
+    }
+  };
+
   const handleAddAdmission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientNameInput.trim()) return;
+    if (!patientIdInput.trim()) return;
+
+    const pt = patients.find(p => p.id === patientIdInput);
+    if (!pt) {
+      toast.error('Patient not found');
+      return;
+    }
 
     setSaving(true);
     try {
-      const newAdm: any = {
-        clinicId,
-        patientId: 'p-quick',
-        patientName: patientNameInput.trim(),
-        dentist: dentistInput,
+      const newAppt: any = {
+        patientId: pt.id,
+        patientName: `${pt.firstName} ${pt.lastName}`,
+        date: todayDateStr,
+        startTime: startTimeInput,
+        endTime: endTimeInput,
+        duration: 30,
         room: roomInput,
-        scheduledTime: `${startTimeInput}\n${endTimeInput}`,
-        arrivalTime: statusInput === 'Waiting' || statusInput === 'In Session' ? format(new Date(), 'hh:mm a') : '',
-        status: statusInput,
+        appointmentType: 'Walk-in',
+        dentist: dentistInput.replace('Dr. ', ''),
         notes: statusInput === 'Late' ? 'Arrived late' : statusInput === 'In Session' ? `Arrived: ${format(new Date(), 'hh:mm a')}` : 'Waiting in lobby',
-        date: todayDateStr
+        status: statusInput === 'Waiting' ? 'Arrived' : statusInput === 'In Session' ? 'Confirmed' : 'Scheduled',
+        isDeleted: false
       };
 
-      const docRef = await addAdmission(newAdm);
-      toast.success(`${newAdm.patientName} added to waiting room`);
+      await addAppointment(newAppt);
+      toast.success(`${pt.firstName} added to waiting room & appointments`);
       setIsAddModalOpen(false);
-      setPatientNameInput('');
+      setPatientIdInput('');
     } catch (err) {
       toast.error('Failed to add admission');
     } finally {
@@ -499,19 +523,28 @@ export default function Admissions() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      if (item.patientId && item.patientId !== 'p-gen') {
-                        navigate(`/patients/${item.patientId}?tab=notes`);
-                      } else {
-                        toast.error('Cannot view notes for unregistered patient');
-                      }
-                    }}
-                    title="Clinical Notes"
-                    className="p-2 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-600"
-                  >
-                    <FileText size={15} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (item.patientId && item.patientId !== 'p-gen') {
+                          navigate(`/patients/${item.patientId}?tab=notes`);
+                        } else {
+                          toast.error('Cannot view notes for unregistered patient');
+                        }
+                      }}
+                      title="Clinical Notes"
+                      className="p-2 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-600"
+                    >
+                      <FileText size={15} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item)}
+                      title="Delete Admission"
+                      className="p-2 rounded-lg bg-white border border-red-100 text-red-400 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Action Buttons with high-touch targets */}
@@ -684,6 +717,13 @@ export default function Admissions() {
                   >
                     <FileText size={15} />
                   </button>
+                  <button
+                    onClick={() => handleDelete(item)}
+                    title="Delete Admission"
+                    className="text-red-300 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-colors"
+                  >
+                    <Trash2 size={15} />
+                  </button>
 
                   {/* Actions matching reference */}
                   {isInSession ? (
@@ -784,13 +824,13 @@ export default function Admissions() {
                 <label className="block font-semibold text-slate-700 mb-1">Patient Name *</label>
                 <select
                   required
-                  value={patientNameInput}
-                  onChange={(e) => setPatientNameInput(e.target.value)}
+                  value={patientIdInput}
+                  onChange={(e) => setPatientIdInput(e.target.value)}
                   className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                 >
                   <option value="">Select patient...</option>
                   {patients.map(p => (
-                    <option key={p.id} value={`${p.firstName} ${p.lastName}`}>
+                    <option key={p.id} value={p.id}>
                       {p.firstName} {p.lastName}
                     </option>
                   ))}
