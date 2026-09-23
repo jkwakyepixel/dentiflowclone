@@ -95,12 +95,12 @@ export default function Invoices() {
       window.print();
     }, 300);
   };
-  // KPI Calculations
-  const allInvoicesOnly = invoices.filter(i => (i.type || 'Invoice') === 'Invoice');
-  const kpiTotalInvoiced = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
-  const kpiTotalCollected = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.amountPaid) || 0), 0);
-  const kpiTotalOutstanding = allInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
-  const kpiOverdueCount = allInvoicesOnly.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
+  // KPI Calculations (responds to date, search, and status filters)
+  const filteredInvoicesOnly = filteredInvoices.filter(i => (i.type || 'Invoice') === 'Invoice');
+  const kpiTotalInvoiced = filteredInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  const kpiTotalCollected = filteredInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.amountPaid) || 0), 0);
+  const kpiTotalOutstanding = filteredInvoicesOnly.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
+  const kpiOverdueCount = filteredInvoicesOnly.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
 
   return (
     <div className="space-y-6 pb-12 print:space-y-0 print:pb-0">

@@ -116,24 +116,21 @@ export default function FinancialReports() {
   const periodInvoices = allInvoices.filter(i => checkDateInPeriod(i.invoiceDate || i.date));
   const periodPayments = payments.filter(p => checkDateInPeriod(p.paymentDate));
 
-  // KPI Calculations - use ALL invoices for lifetime totals, period for activity
-  // "Total Invoiced" = sum of all invoice totals (lifetime, not period-filtered)
-  const totalInvoiced = allInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
-  // "Total Collected" = sum of all payment amounts (lifetime)
-  const totalCollected = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  // "Total Outstanding" = sum of remaining balances on all invoices
-  const totalOutstanding = allInvoices.reduce((sum, i) => sum + (Number(i.balance) || 0), 0);
-
-  // Period-specific metrics for the header subtitle
-  const periodRevenue = periodPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const periodInvoicedTotal = periodInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+  // KPI Calculations (Filtered by selected period)
+  const totalInvoiced = periodInvoices.reduce((sum, i) => sum + (Number(i.total) || 0), 0);
+  const totalCollected = periodPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  // Total Outstanding for the period (amount remaining on invoices created in this period)
+  const totalOutstanding = periodInvoices.reduce((sum, i) => sum + (Number(i.balance) || 0), 0);
   const periodTransactions = periodPayments.length;
 
-  // Invoice statuses (all time)
-  const paidInvoices = allInvoices.filter(i => i.status === 'Paid' || i.balance === 0).length;
-  const partiallyPaidInvoices = allInvoices.filter(i => i.status === 'Partially Paid' || (i.balance > 0 && i.amountPaid > 0)).length;
-  const unpaidInvoices = allInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Draft' || (i.balance === i.total && i.balance > 0)).length;
-  const overdueInvoices = allInvoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
+  // Invoice statuses (filtered by period)
+  const paidInvoices = periodInvoices.filter(i => i.status === 'Paid' || i.balance === 0).length;
+  const partiallyPaidInvoices = periodInvoices.filter(i => i.status === 'Partially Paid' || (i.balance > 0 && i.amountPaid > 0)).length;
+  const unpaidInvoices = periodInvoices.filter(i => i.status === 'Unpaid' || i.status === 'Draft' || (i.balance === i.total && i.balance > 0)).length;
+  const overdueInvoices = periodInvoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
+
+  // Collection rate
+  const collectionRate = totalInvoiced > 0 ? Math.min(100, (totalCollected / totalInvoiced) * 100) : 0;
 
   const outstandingInvoicesList = allInvoices.filter(i => i.balance > 0).map(i => ({
     id: i.id || i.invoiceNumber,
@@ -182,7 +179,7 @@ export default function FinancialReports() {
     .map(([name, amount]) => ({
       name,
       amount,
-      percentage: periodInvoicedTotal > 0 ? (amount / periodInvoicedTotal) * 100 : 0
+      percentage: totalInvoiced > 0 ? (amount / totalInvoiced) * 100 : 0
     }));
 
   // Donut chart percentages (period-filtered)
@@ -203,18 +200,15 @@ export default function FinancialReports() {
     return { fill, offset: prevOffset - fill };
   };
 
-  const cashPct = periodRevenue > 0 ? (paymentMethods['Cash'] / periodRevenue) * 100 : 0;
-  const momoPct = periodRevenue > 0 ? (paymentMethods['Mobile Money'] / periodRevenue) * 100 : 0;
-  const bankPct = periodRevenue > 0 ? (paymentMethods['Bank Transfer'] / periodRevenue) * 100 : 0;
-  const cardPct = periodRevenue > 0 ? (paymentMethods['Card'] / periodRevenue) * 100 : 0;
+  const cashPct = totalCollected > 0 ? (paymentMethods['Cash'] / totalCollected) * 100 : 0;
+  const momoPct = totalCollected > 0 ? (paymentMethods['Mobile Money'] / totalCollected) * 100 : 0;
+  const bankPct = totalCollected > 0 ? (paymentMethods['Bank Transfer'] / totalCollected) * 100 : 0;
+  const cardPct = totalCollected > 0 ? (paymentMethods['Card'] / totalCollected) * 100 : 0;
 
   const cashLine = (cashPct / 100) * 238.7;
   const momoLine = (momoPct / 100) * 238.7;
   const bankLine = (bankPct / 100) * 238.7;
   const cardLine = (cardPct / 100) * 238.7;
-
-  // Collection rate
-  const collectionRate = totalInvoiced > 0 ? Math.min(100, (totalCollected / totalInvoiced) * 100) : 0;
 
   return (
     <div className="space-y-6 pb-16">
@@ -256,9 +250,9 @@ export default function FinancialReports() {
         </div>
       </div>
 
-      {/* 2. Lifetime Summary KPI Cards */}
+      {/* 2. Summary KPI Cards (Filtered by selectedPeriod) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Invoiced (All Time) */}
+        {/* Total Invoiced */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#eff6ff] text-[#3b82f6] flex items-center justify-center flex-shrink-0">
@@ -267,10 +261,10 @@ export default function FinancialReports() {
             <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Total Invoiced</p>
           </div>
           <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">All time · {allInvoices.length} inv</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">{selectedPeriod} · {periodInvoices.length} inv</p>
         </div>
 
-        {/* Total Collected (All Time) */}
+        {/* Total Collected */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
@@ -280,11 +274,11 @@ export default function FinancialReports() {
           </div>
           <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
           <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
-            {collectionRate.toFixed(0)}% rate · {payments.length} pmts
+            {selectedPeriod} · {periodPayments.length} pmts
           </p>
         </div>
 
-        {/* Total Outstanding (All Time) */}
+        {/* Total Outstanding */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
@@ -293,20 +287,20 @@ export default function FinancialReports() {
             <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Outstanding</p>
           </div>
           <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">{outstandingInvoicesList.length} unpaid inv</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">{unpaidInvoices + partiallyPaidInvoices} unpaid inv</p>
         </div>
 
-        {/* Period Activity Card */}
+        {/* Collection Rate */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#f0fdfa] text-[#14b8a6] flex items-center justify-center flex-shrink-0">
               <TrendingUp size={18} className="stroke-[2.5]" />
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">{selectedPeriod}</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Collection Rate</p>
           </div>
-          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">GH₵ {periodRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 truncate">{collectionRate.toFixed(1)}%</p>
           <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
-            {periodTransactions} pmts · {periodInvoices.length} inv
+            {selectedPeriod}
           </p>
         </div>
       </div>
@@ -443,7 +437,7 @@ export default function FinancialReports() {
 
             {/* Hover Tooltip Badge at bottom right of donut */}
             <div className="absolute bottom-6 right-16 bg-white/90 backdrop-blur-xs border border-slate-100 shadow-sm rounded-lg px-2 py-0.5 text-[11px] font-bold text-slate-700">
-              GH₵ {periodRevenue.toFixed(2)}
+              GH₵ {totalCollected.toFixed(2)}
             </div>
           </div>
 

@@ -195,11 +195,6 @@ export default function Payments() {
     } catch { return false; }
   };
 
-  const kpiTotalCollected = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-  const kpiMonthCollected = payments.filter(p => isPaymentThisMonth(p.paymentDate)).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-  const kpiTodayCollected = payments.filter(p => isPaymentToday(p.paymentDate)).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
-  const kpiTotalTransactions = payments.length;
-
   const filteredPayments = payments.filter(p => {
     const q = searchTerm.toLowerCase();
     const matchesSearch = !searchTerm || 
@@ -213,7 +208,10 @@ export default function Payments() {
     let matchesDate = true;
     if (dateFilter !== 'All Time' && p.paymentDate) {
       try {
-        const dateObj = parse(p.paymentDate, 'd MMM yyyy', new Date());
+        let dateObj = new Date(p.paymentDate);
+        if (isNaN(dateObj.getTime())) {
+          dateObj = parse(p.paymentDate, 'd MMM yyyy', new Date());
+        }
         if (dateFilter === 'Today') matchesDate = isToday(dateObj);
         else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
         else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
@@ -226,6 +224,12 @@ export default function Payments() {
     return matchesSearch && matchesMethod && matchesDate;
   });
 
+  // KPI Calculations (responds to date, search, and method filters)
+  const kpiTotalCollected = filteredPayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiCashCollected = filteredPayments.filter(p => p.paymentMethod === 'Cash').reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiDigitalCollected = filteredPayments.filter(p => ['Mobile Money', 'Card', 'Bank Transfer'].includes(p.paymentMethod)).reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const kpiTotalTransactions = filteredPayments.length;
+
   const paginatedPayments = filteredPayments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
@@ -235,7 +239,7 @@ export default function Payments() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Payments</h1>
-          <p className="text-xs text-slate-400 mt-1">{payments.length} recorded payments</p>
+          <p className="text-xs text-slate-400 mt-1">{filteredPayments.length} recorded payments</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -261,28 +265,28 @@ export default function Payments() {
           </div>
         </div>
 
-        {/* Collected This Month */}
+        {/* Cash Collected */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#ecfdf5] text-[#10b981] flex items-center justify-center flex-shrink-0">
-            <CalendarIcon size={20} className="stroke-[2.5]" />
+            <DollarSign size={20} className="stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">This Month</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Cash</p>
             <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">
-              GH₵ {kpiMonthCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              GH₵ {kpiCashCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
 
-        {/* Collected Today */}
+        {/* Digital Collected */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#f0fdfa] text-[#14b8a6] flex items-center justify-center flex-shrink-0">
-            <Check size={20} className="stroke-[2.5]" />
+            <CreditCard size={20} className="stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Today</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Digital / Mobile</p>
             <p className="text-sm sm:text-lg font-bold text-slate-900 mt-0.5 truncate">
-              GH₵ {kpiTodayCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              GH₵ {kpiDigitalCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
@@ -290,7 +294,7 @@ export default function Payments() {
         {/* Total Transactions */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center gap-3 sm:gap-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#fffbeb] text-[#f59e0b] flex items-center justify-center flex-shrink-0">
-            <CreditCard size={20} className="stroke-[2.5]" />
+            <Check size={20} className="stroke-[2.5]" />
           </div>
           <div className="min-w-0">
             <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Transactions</p>
