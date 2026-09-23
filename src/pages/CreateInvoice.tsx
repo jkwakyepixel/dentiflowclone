@@ -19,7 +19,7 @@ import {
   Layers 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
+import { format, addDays } from 'date-fns';
 
 const SAMPLE_PATIENT_OPTIONS = [
   { id: 'p1', firstName: 'John', lastName: 'Mensah', patientId: 'PAT-0001', phone: '+233 24 123 4567', email: 'john.mensah@gmail.com' },
@@ -50,8 +50,9 @@ export default function CreateInvoice() {
   const [patientId, setPatientId] = useState(urlPatientId);
   const prefix = isQuotation ? 'QUO' : 'INV';
   const [invoiceNumber, setInvoiceNumber] = useState(`${prefix}-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`);
-  const [invoiceDate, setInvoiceDate] = useState('2026-08-26');
-  const [dueDate, setDueDate] = useState('2026-09-09');
+  
+  const [invoiceDate, setInvoiceDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [dueDate, setDueDate] = useState(() => format(addDays(new Date(), 3), 'yyyy-MM-dd'));
   
   const [items, setItems] = useState<InvoiceItem[]>([]);
   
