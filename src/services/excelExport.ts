@@ -1,7 +1,76 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { format, parseISO, isSameMonth, subMonths, getDaysInMonth, getDate } from 'date-fns';
+import { format, parseISO, isSameMonth, subMonths, getDaysInMonth, getDate, parse } from 'date-fns';
 import type { Invoice, Patient, Payment, Expense } from '../types';
+
+/**
+ * Safely parse any date string/object the app stores.
+ * Handles: ISO "2026-09-30", human "30 Sep 2026", ISO with time "2026-09-30T...",
+ * Firestore Timestamp objects, and plain Date objects.
+ * Returns null if unparseable.
+ */
+function safeParseDate(value: any): Date | null {
+  if (!value) return null;
+
+  // Firestore Timestamp → has .toDate()
+  if (typeof value?.toDate === 'function') {
+    return value.toDate();
+  }
+
+  // Already a Date
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value !== 'string') return null;
+
+  const s = value.trim();
+  if (!s) return null;
+
+  // Try ISO first  ("2026-09-30" or "2026-09-30T14:00:00Z")
+  try {
+    const d = parseISO(s);
+    if (!isNaN(d.getTime())) return d;
+  } catch { /* ignore */ }
+
+  // Try "d MMM yyyy" ("30 Sep 2026")
+  try {
+    const d = parse(s, 'd MMM yyyy', new Date());
+    if (!isNaN(d.getTime())) return d;
+  } catch { /* ignore */ }
+
+  // Try "dd MMM yyyy" ("05 Sep 2026" with leading zero)
+  try {
+    const d = parse(s, 'dd MMM yyyy', new Date());
+    if (!isNaN(d.getTime())) return d;
+  } catch { /* ignore */ }
+
+  // Try native Date constructor as last resort
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return d;
+  } catch { /* ignore */ }
+
+  return null;
+}
+
+/**
+ * Check if a date value falls in the same month/year as the target date.
+ */
+function isInMonth(value: any, targetMonth: Date): boolean {
+  const d = safeParseDate(value);
+  if (!d) return false;
+  return isSameMonth(d, targetMonth);
+}
+
+/**
+ * Format a date value to a readable string for the Excel detail sheets.
+ */
+function formatDateForSheet(value: any): string {
+  const d = safeParseDate(value);
+  if (!d) return String(value || '—');
+  return format(d, 'yyyy-MM-dd');
+}
 
 export const exportFinancialTrackerExcel = async (
   clinicName: string,
@@ -28,84 +97,92 @@ export const exportFinancialTrackerExcel = async (
 
   const prevMonthDate = subMonths(filterDate, 1);
 
-  // --- Calculations ---
+  // --- DEBUG: Log counts so we can verify ---
+  console.log(`[ExcelExport] Generating for: ${reportTitleDate}`);
+  console.log(`[ExcelExport] Total invoices in system: ${invoices.length}`);
+  console.log(`[ExcelExport] Total payments in system: ${payments.length}`);
+  console.log(`[ExcelExport] Total expenses in system: ${expenses.length}`);
 
-  // 1. Current Month Invoices
-  const currentInvoices = invoices.filter(inv => {
-    try { return isSameMonth(parseISO(inv.invoiceDate || inv.date || ''), filterDate); } catch { return false; }
-  });
-  
-  // 2. Prior Month Invoices
-  const priorInvoices = invoices.filter(inv => {
-    try { return isSameMonth(parseISO(inv.invoiceDate || inv.date || ''), prevMonthDate); } catch { return false; }
-  });
+  // --- Filter data for the selected month ---
 
-  // 3. Current Month Payments
-  const currentPayments = payments.filter(p => {
-    try { return isSameMonth(parseISO(p.paymentDate || ''), filterDate); } catch { return false; }
-  });
+  const currentInvoices = invoices.filter(inv =>
+    isInMonth(inv.invoiceDate || inv.date, filterDate)
+  );
 
-  // 4. Prior Month Payments
-  const priorPayments = payments.filter(p => {
-    try { return isSameMonth(parseISO(p.paymentDate || ''), prevMonthDate); } catch { return false; }
-  });
+  const priorInvoices = invoices.filter(inv =>
+    isInMonth(inv.invoiceDate || inv.date, prevMonthDate)
+  );
 
-  // Values
+  const currentPayments = payments.filter(p =>
+    isInMonth(p.paymentDate, filterDate)
+  );
+
+  const priorPayments = payments.filter(p =>
+    isInMonth(p.paymentDate, prevMonthDate)
+  );
+
+  const currentExpenses = expenses.filter(exp =>
+    isInMonth(exp.date, filterDate)
+  );
+
+  console.log(`[ExcelExport] Current month invoices: ${currentInvoices.length}`);
+  console.log(`[ExcelExport] Current month payments: ${currentPayments.length}`);
+  console.log(`[ExcelExport] Current month expenses: ${currentExpenses.length}`);
+
+  // --- KPI Calculations ---
+
   const currentBilled = currentInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
   const priorBilled = priorInvoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
 
   const currentOutstanding = currentInvoices.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
-  const priorOutstanding = priorInvoices.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
-  
+
   const currentRevenue = currentPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const priorRevenue = priorPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  const overdueInvoicesCount = currentInvoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
+  const overdueInvoicesCount = currentInvoices.filter(i => {
+    const dueDate = safeParseDate(i.dueDate);
+    return dueDate && dueDate < new Date() && (Number(i.balance) || 0) > 0;
+  }).length;
+
   const discountsGiven = currentInvoices.reduce((sum, inv) => sum + (Number(inv.discount) || 0), 0);
-  
-  // Expenses / Net Profit
-  const currentExpenses = expenses.filter(exp => {
-    try { return isSameMonth(parseISO(exp.date), filterDate); } catch { return false; }
-  });
+
   const expensesPaid = currentExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const netProfit = currentRevenue - expensesPaid;
-  const collectionRate = currentBilled > 0 ? (currentRevenue / currentBilled) : 1;
+  const collectionRate = currentBilled > 0 ? (currentRevenue / currentBilled) : 0;
 
   const revMoM = priorRevenue > 0 ? (currentRevenue - priorRevenue) / priorRevenue : 0;
-  const billedMoM = priorBilled > 0 ? (currentBilled - priorBilled) / priorBilled : 0;
 
   // Patients
   const patientIdsSeen = new Set<string>();
-  currentInvoices.forEach(inv => { if(inv.patientId) patientIdsSeen.add(inv.patientId); });
-  currentPayments.forEach(p => { if(p.patientId) patientIdsSeen.add(p.patientId); });
-  const patientsServed = patientIdsSeen.size || 1; // avoid /0
+  currentInvoices.forEach(inv => { if (inv.patientId) patientIdsSeen.add(inv.patientId); });
+  currentPayments.forEach(p => { if (p.patientId) patientIdsSeen.add(p.patientId); });
+  const patientsServed = patientIdsSeen.size;
 
-  const newPatientsCount = patients.filter(pt => {
-    try { return pt.createdAt && isSameMonth(new Date(pt.createdAt), filterDate); } catch { return false; }
-  }).length;
-  
-  const returningPatients = Math.max(0, patientsServed - newPatientsCount);
-  const retentionRevPct = patientsServed > 0 ? returningPatients / patientsServed : 0;
+  const newPatientsCount = patients.filter(pt => isInMonth(pt.createdAt, filterDate)).length;
 
   // Transactions
   const transactions = currentPayments.length;
   const avgTransaction = transactions > 0 ? currentRevenue / transactions : 0;
-  const avgPatientAnnualValue = (currentRevenue * 12) / patientsServed;
 
   // Daily
-  const activeDays = new Set(currentPayments.map(p => p.paymentDate?.split('T')[0] || p.paymentDate?.split(' ')[0])).size;
-  const workingDays = activeDays > 0 ? activeDays : 1;
+  const paymentDays = new Set<string>();
+  currentPayments.forEach(p => {
+    const d = safeParseDate(p.paymentDate);
+    if (d) paymentDays.add(format(d, 'yyyy-MM-dd'));
+  });
+  const workingDays = paymentDays.size > 0 ? paymentDays.size : 1;
   const revPerWorkingDay = currentRevenue / workingDays;
   const daysPassed = isSameMonth(new Date(), filterDate) ? getDate(new Date()) : getDaysInMonth(filterDate);
   const runRate = daysPassed > 0 ? (currentRevenue / daysPassed) * getDaysInMonth(filterDate) : currentRevenue;
 
-  // Payment Methods
-  const methodTotals: Record<string, number> = { 'Cash': 0, 'Bank Transfer': 0, 'Wallet': 0, 'Cheque': 0 };
+  // Payment Methods — dynamically collect ALL methods actually used
+  const methodTotals: Record<string, number> = {};
   currentPayments.forEach(p => {
     const m = p.paymentMethod || 'Cash';
-    if (methodTotals[m] !== undefined) methodTotals[m] += Number(p.amount);
-    else methodTotals['Cash'] += Number(p.amount);
+    methodTotals[m] = (methodTotals[m] || 0) + (Number(p.amount) || 0);
   });
+
+  console.log(`[ExcelExport] Revenue: ${currentRevenue}, Billed: ${currentBilled}, Outstanding: ${currentOutstanding}, Expenses: ${expensesPaid}`);
 
   // --- Excel Setup ---
 
@@ -133,13 +210,6 @@ export const exportFinancialTrackerExcel = async (
     };
   };
 
-  const setThickBorder = (cell: ExcelJS.Cell) => {
-    cell.border = {
-      top: { style: 'medium' }, left: { style: 'medium' },
-      bottom: { style: 'medium' }, right: { style: 'medium' }
-    };
-  };
-
   // --- Header ---
   ws.mergeCells('A2:H2');
   const title1 = ws.getCell('A2');
@@ -157,7 +227,7 @@ export const exportFinancialTrackerExcel = async (
 
   ws.mergeCells('A4:H4');
   const title3 = ws.getCell('A4');
-  title3.value = `Management Overview · ${reportTitleDate} · Generated ${format(new Date(), 'dd MMMM yyyy \'at\' HH:mm')} · v9.4`;
+  title3.value = `Management Overview · ${reportTitleDate} · Generated ${format(new Date(), 'dd MMMM yyyy \'at\' HH:mm')}`;
   setFont(title3, 9, false, 'FF333333');
   title3.alignment = { horizontal: 'center', vertical: 'middle' };
   setBg(title3, 'FFF3F3F3');
@@ -165,21 +235,19 @@ export const exportFinancialTrackerExcel = async (
   // --- How to read this report ---
   ws.mergeCells('J6:J10');
   const howToRead = ws.getCell('J6');
-  howToRead.value = "HOW TO READ THIS REPORT\n\n- Revenue = cash collected (payments endpoint)\n\n- Outstanding = billed but not yet received\n\n- Collection Rate = Revenue / Billed (higher is better)\n\n- All amounts in GHS (Ghanaian Cedi)\n\n- Anomaly Report lists every item needing action";
+  howToRead.value = "HOW TO READ THIS REPORT\n\n- Revenue = cash collected (payments)\n\n- Outstanding = billed but not yet received\n\n- Collection Rate = Revenue / Billed\n\n- All amounts in GHS (₵)\n\n- Net Profit = Revenue − Expenses";
   setFont(howToRead, 8, false);
   howToRead.alignment = { vertical: 'top', wrapText: true };
   howToRead.border = { top: { style: 'medium' }, left: { style: 'medium' }, bottom: { style: 'medium' }, right: { style: 'medium' } };
 
   // --- Helper to build KPI blocks ---
   const buildKPI = (rowIdx: number, colStart: number, label: string, value: any, valColor: string, valBg: string, isPercent = false, isCurrency = false) => {
-    // Label Row
     const labelRow = rowIdx;
     const valRow = rowIdx + 1;
-    
-    // Determine cell letters (colStart 1 => A, 3 => C, 5 => E, 7 => G)
+
     const c1 = String.fromCharCode(64 + colStart);
     const c2 = String.fromCharCode(64 + colStart + 1);
-    
+
     ws.mergeCells(`${c1}${labelRow}:${c2}${labelRow}`);
     const lCell = ws.getCell(`${c1}${labelRow}`);
     lCell.value = label;
@@ -191,7 +259,7 @@ export const exportFinancialTrackerExcel = async (
 
     ws.mergeCells(`${c1}${valRow}:${c2}${valRow}`);
     const vCell = ws.getCell(`${c1}${valRow}`);
-    
+
     if (isPercent) {
       vCell.value = value;
       vCell.numFmt = '0.0%';
@@ -201,7 +269,7 @@ export const exportFinancialTrackerExcel = async (
     } else {
       vCell.value = value;
     }
-    
+
     setFont(vCell, 12, true, valColor);
     vCell.alignment = { horizontal: 'center', vertical: 'middle' };
     setBg(vCell, valBg);
@@ -210,28 +278,29 @@ export const exportFinancialTrackerExcel = async (
   };
 
   // Row 6-7 (Financial Core)
-  buildKPI(6, 1, '💰 Revenue Collected (GHS)', currentRevenue, 'FFD97706', 'FFFDF5E6', false, true);
-  buildKPI(6, 3, '📝 Invoice Billed (GHS)', currentBilled, 'FF000000', 'FFFFFFFF', false, true);
-  buildKPI(6, 5, '⏳ Outstanding Balance (GHS)', currentOutstanding, 'FFDC2626', 'FFFCE8E6', false, true);
-  buildKPI(6, 7, '⚠️ Overdue Invoices', overdueInvoicesCount, 'FFDC2626', 'FFFCE8E6');
+  buildKPI(6, 1, 'Revenue Collected (GHS)', currentRevenue, 'FFD97706', 'FFFDF5E6', false, true);
+  buildKPI(6, 3, 'Invoice Billed (GHS)', currentBilled, 'FF000000', 'FFFFFFFF', false, true);
+  buildKPI(6, 5, 'Outstanding Balance (GHS)', currentOutstanding, 'FFDC2626', 'FFFCE8E6', false, true);
+  buildKPI(6, 7, 'Overdue Invoices', overdueInvoicesCount, 'FFDC2626', 'FFFCE8E6');
 
   // Row 8-9 (Operational Core)
-  buildKPI(8, 1, '👥 Total Patients Served', patientsServed, 'FF000000', 'FFFFFFFF');
-  buildKPI(8, 3, '🆕 New Patients', newPatientsCount, 'FF166534', 'FFE6F4EA');
-  buildKPI(8, 5, '💳 Total Transactions', transactions, 'FF000000', 'FFFFFFFF');
-  buildKPI(8, 7, '📊 Collection Rate %', collectionRate, 'FF166534', 'FFE6F4EA', true, false);
+  buildKPI(8, 1, 'Total Patients Served', patientsServed, 'FF000000', 'FFFFFFFF');
+  buildKPI(8, 3, 'New Patients', newPatientsCount, 'FF166534', 'FFE6F4EA');
+  buildKPI(8, 5, 'Total Transactions', transactions, 'FF000000', 'FFFFFFFF');
+  buildKPI(8, 7, 'Collection Rate %', collectionRate, 'FF166534', 'FFE6F4EA', true, false);
 
   // Row 10-11 (Growth & Averages)
-  buildKPI(10, 1, '💰 Current Month Revenue (GHS)', currentRevenue, 'FFD97706', 'FFFDF5E6', false, true);
-  buildKPI(10, 3, '⏮️ Prior Month Collections (GHS)', priorRevenue, 'FF000000', 'FFFFFFFF', false, true);
-  buildKPI(10, 5, '📅 Revenue MoM Δ %', revMoM, 'FF000000', 'FFFFFFFF', true, false);
-  buildKPI(10, 7, '💵 Avg Transaction (GHS)', avgTransaction, 'FFD97706', 'FFFDF5E6', false, true);
+  buildKPI(10, 1, 'Current Month Revenue (GHS)', currentRevenue, 'FFD97706', 'FFFDF5E6', false, true);
+  buildKPI(10, 3, 'Prior Month Collections (GHS)', priorRevenue, 'FF000000', 'FFFFFFFF', false, true);
+  buildKPI(10, 5, 'Revenue MoM Change %', revMoM, 'FF000000', 'FFFFFFFF', true, false);
+  buildKPI(10, 7, 'Avg Transaction (GHS)', avgTransaction, 'FFD97706', 'FFFDF5E6', false, true);
 
   // Row 12-13 (Profitability)
-  buildKPI(12, 1, '💸 Expenses Paid (GHS)', expensesPaid, 'FF000000', 'FFFFFFFF', false, true);
-  buildKPI(12, 3, '📈 Net Profit (GHS)', netProfit, 'FF166534', 'FFE6F4EA', false, true);
-  ws.mergeCells('E12:H13');
-  const emptyVal = ws.getCell('E12');
+  buildKPI(12, 1, 'Expenses Paid (GHS)', expensesPaid, 'FFDC2626', 'FFFCE8E6', false, true);
+  buildKPI(12, 3, 'Net Profit (GHS)', netProfit, netProfit >= 0 ? 'FF166534' : 'FFDC2626', netProfit >= 0 ? 'FFE6F4EA' : 'FFFCE8E6', false, true);
+  buildKPI(12, 5, 'Discounts Given (GHS)', discountsGiven, 'FF000000', 'FFFFFFFF', false, true);
+  ws.mergeCells('G12:H13');
+  const emptyVal = ws.getCell('G12');
   setBg(emptyVal, 'FFFDF5E6');
 
   // --- Daily Performance ---
@@ -243,14 +312,14 @@ export const exportFinancialTrackerExcel = async (
 
   ws.mergeCells('A16:C16');
   ws.mergeCells('A17:C17');
-  ws.getCell('A16').value = '📅 Working Days with Revenue';
+  ws.getCell('A16').value = 'Working Days with Revenue';
   ws.getCell('A17').value = workingDays;
   setFont(ws.getCell('A16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('A16'), 'FF164B2C'); setBorder(ws.getCell('A16'));
   setFont(ws.getCell('A17'), 12, true, 'FF000000'); setBg(ws.getCell('A17'), 'FFFFFFFF'); setBorder(ws.getCell('A17'));
 
   ws.mergeCells('D16:E16');
   ws.mergeCells('D17:E17');
-  ws.getCell('D16').value = '💸 Revenue per Working Day (GHS)';
+  ws.getCell('D16').value = 'Revenue per Working Day (GHS)';
   ws.getCell('D17').value = revPerWorkingDay;
   ws.getCell('D17').numFmt = '#,##0.00';
   setFont(ws.getCell('D16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('D16'), 'FF164B2C'); setBorder(ws.getCell('D16'));
@@ -258,7 +327,7 @@ export const exportFinancialTrackerExcel = async (
 
   ws.mergeCells('F16:H16');
   ws.mergeCells('F17:H17');
-  ws.getCell('F16').value = '🚀 Implied Monthly Run Rate (GHS)';
+  ws.getCell('F16').value = 'Implied Monthly Run Rate (GHS)';
   ws.getCell('F17').value = runRate;
   ws.getCell('F17').numFmt = '#,##0.00';
   setFont(ws.getCell('F16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('F16'), 'FF164B2C'); setBorder(ws.getCell('F16'));
@@ -267,50 +336,52 @@ export const exportFinancialTrackerExcel = async (
   // --- Insight String ---
   ws.mergeCells('A19:H19');
   const insight = ws.getCell('A19');
-  insight.value = `💡 Revenue: GHS ${currentRevenue.toFixed(2)} | Expenses: GHS ${expensesPaid.toFixed(2)} | Net Profit: GHS ${netProfit.toFixed(2)} | ${overdueInvoicesCount} HIGH-priority overdue flag(s)`;
+  insight.value = `Revenue: GHS ${currentRevenue.toFixed(2)} | Expenses: GHS ${expensesPaid.toFixed(2)} | Net Profit: GHS ${netProfit.toFixed(2)} | Collection Rate: ${(collectionRate * 100).toFixed(1)}% | ${overdueInvoicesCount} overdue invoice(s)`;
   setFont(insight, 9, false, 'FF555555');
   setBg(insight, 'FFF4F6F8');
 
   // --- Payment Methods ---
-  ws.mergeCells('A21:D21');
-  const payHeader = ws.getCell('A21');
-  payHeader.value = 'REVENUE BY PAYMENT METHOD';
-  setFont(payHeader, 10, true, 'FFFFFFFF');
-  setBg(payHeader, 'FF0F2C1A');
+  const methodKeys = Object.keys(methodTotals);
+  if (methodKeys.length > 0) {
+    ws.mergeCells('A21:D21');
+    const payHeader = ws.getCell('A21');
+    payHeader.value = 'REVENUE BY PAYMENT METHOD';
+    setFont(payHeader, 10, true, 'FFFFFFFF');
+    setBg(payHeader, 'FF0F2C1A');
 
-  ws.mergeCells('A22:B22');
-  ws.getCell('A22').value = 'Method';
-  ws.getCell('C22').value = 'Amount (GHS)';
-  ws.getCell('D22').value = '% of Revenue';
-  ['A22', 'C22', 'D22'].forEach(c => {
-    setFont(ws.getCell(c), 9, true, 'FFFFFFFF');
-    setBg(ws.getCell(c), 'FF164B2C');
-    setBorder(ws.getCell(c));
-    ws.getCell(c).alignment = { horizontal: 'center' };
-  });
+    ws.mergeCells('A22:B22');
+    ws.getCell('A22').value = 'Method';
+    ws.getCell('C22').value = 'Amount (GHS)';
+    ws.getCell('D22').value = '% of Revenue';
+    ['A22', 'C22', 'D22'].forEach(c => {
+      setFont(ws.getCell(c), 9, true, 'FFFFFFFF');
+      setBg(ws.getCell(c), 'FF164B2C');
+      setBorder(ws.getCell(c));
+      ws.getCell(c).alignment = { horizontal: 'center' };
+    });
 
-  let r = 23;
-  for (const [method, amount] of Object.entries(methodTotals)) {
-    ws.mergeCells(`A${r}:B${r}`);
-    ws.getCell(`A${r}`).value = method;
-    ws.getCell(`C${r}`).value = amount;
-    ws.getCell(`D${r}`).value = currentRevenue > 0 ? amount / currentRevenue : 0;
-    
-    ws.getCell(`C${r}`).numFmt = '#,##0.00';
-    ws.getCell(`D${r}`).numFmt = '0.0%';
-    setBorder(ws.getCell(`A${r}`));
-    setBorder(ws.getCell(`C${r}`));
-    setBorder(ws.getCell(`D${r}`));
-    r++;
+    let r = 23;
+    for (const [method, amount] of Object.entries(methodTotals)) {
+      ws.mergeCells(`A${r}:B${r}`);
+      ws.getCell(`A${r}`).value = method;
+      ws.getCell(`C${r}`).value = amount;
+      ws.getCell(`D${r}`).value = currentRevenue > 0 ? amount / currentRevenue : 0;
+
+      ws.getCell(`C${r}`).numFmt = '#,##0.00';
+      ws.getCell(`D${r}`).numFmt = '0.0%';
+      setBorder(ws.getCell(`A${r}`));
+      setBorder(ws.getCell(`C${r}`));
+      setBorder(ws.getCell(`D${r}`));
+      r++;
+    }
   }
-
 
   // ==========================================
   // SHEET 2: DETAILED INVOICES
   // ==========================================
   const wsInvoices = wb.addWorksheet('Invoices');
   wsInvoices.columns = [
-    { header: 'Invoice #', key: 'invNum', width: 15 },
+    { header: 'Invoice #', key: 'invNum', width: 18 },
     { header: 'Date', key: 'date', width: 15 },
     { header: 'Patient Name', key: 'patient', width: 25 },
     { header: 'Treatments / Services', key: 'services', width: 40 },
@@ -321,7 +392,6 @@ export const exportFinancialTrackerExcel = async (
     { header: 'Status', key: 'status', width: 15 },
   ];
 
-  // Style Header
   wsInvoices.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   wsInvoices.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF164B2C' } };
 
@@ -329,7 +399,7 @@ export const exportFinancialTrackerExcel = async (
     const servicesStr = inv.items?.map(i => `${i.serviceName} (x${i.quantity})`).join(', ') || 'Dental Services';
     wsInvoices.addRow({
       invNum: inv.invoiceNumber,
-      date: inv.invoiceDate || inv.date,
+      date: formatDateForSheet(inv.invoiceDate || inv.date),
       patient: inv.patientName,
       services: servicesStr,
       billed: Number(inv.total) || 0,
@@ -340,7 +410,22 @@ export const exportFinancialTrackerExcel = async (
     });
   });
 
-  // Format currency columns
+  // Totals row for invoices
+  if (currentInvoices.length > 0) {
+    const totRow = wsInvoices.addRow({
+      invNum: '',
+      date: '',
+      patient: '',
+      services: 'TOTALS',
+      billed: currentBilled,
+      discount: discountsGiven,
+      paid: currentInvoices.reduce((s, i) => s + (Number(i.amountPaid) || 0), 0),
+      balance: currentOutstanding,
+      status: ''
+    });
+    totRow.font = { bold: true };
+  }
+
   ['E', 'F', 'G', 'H'].forEach(col => {
     wsInvoices.getColumn(col).numFmt = '#,##0.00';
   });
@@ -352,20 +437,19 @@ export const exportFinancialTrackerExcel = async (
   wsPayments.columns = [
     { header: 'Date', key: 'date', width: 15 },
     { header: 'Patient Name', key: 'patient', width: 25 },
-    { header: 'Invoice #', key: 'invNum', width: 15 },
+    { header: 'Invoice #', key: 'invNum', width: 18 },
     { header: 'Amount (GHS)', key: 'amount', width: 15 },
-    { header: 'Method', key: 'method', width: 15 },
+    { header: 'Method', key: 'method', width: 18 },
     { header: 'Reference', key: 'reference', width: 20 },
     { header: 'Recorded By', key: 'recordedBy', width: 20 },
   ];
 
-  // Style Header
   wsPayments.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   wsPayments.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF164B2C' } };
 
   currentPayments.forEach(p => {
     wsPayments.addRow({
-      date: p.paymentDate?.split('T')[0] || p.paymentDate?.split(' ')[0],
+      date: formatDateForSheet(p.paymentDate),
       patient: p.patientName,
       invNum: p.invoiceNumber,
       amount: Number(p.amount) || 0,
@@ -374,6 +458,20 @@ export const exportFinancialTrackerExcel = async (
       recordedBy: p.recordedBy || 'System'
     });
   });
+
+  // Totals row for payments
+  if (currentPayments.length > 0) {
+    const totRow = wsPayments.addRow({
+      date: '',
+      patient: '',
+      invNum: 'TOTAL',
+      amount: currentRevenue,
+      method: '',
+      reference: '',
+      recordedBy: ''
+    });
+    totRow.font = { bold: true };
+  }
 
   wsPayments.getColumn('D').numFmt = '#,##0.00';
 
@@ -389,19 +487,30 @@ export const exportFinancialTrackerExcel = async (
     { header: 'Recorded By', key: 'recordedBy', width: 20 },
   ];
 
-  // Style Header
   wsExpenses.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   wsExpenses.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF164B2C' } };
 
   currentExpenses.forEach(e => {
     wsExpenses.addRow({
-      date: e.date?.split('T')[0] || e.date?.split(' ')[0],
+      date: formatDateForSheet(e.date),
       category: e.category,
       description: e.description,
       amount: Number(e.amount) || 0,
       recordedBy: e.recordedBy || 'System'
     });
   });
+
+  // Totals row for expenses
+  if (currentExpenses.length > 0) {
+    const totRow = wsExpenses.addRow({
+      date: '',
+      category: '',
+      description: 'TOTAL',
+      amount: expensesPaid,
+      recordedBy: ''
+    });
+    totRow.font = { bold: true };
+  }
 
   wsExpenses.getColumn('D').numFmt = '#,##0.00';
 
