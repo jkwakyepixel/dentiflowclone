@@ -17,6 +17,7 @@ import PatientDetail from './pages/PatientDetail';
 import Invoices from './pages/Invoices';
 import CreateInvoice from './pages/CreateInvoice';
 import Payments from './pages/Payments';
+import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
 import Settings from './pages/Settings';
 
@@ -60,6 +61,9 @@ function App() {
               } />
               <Route path="payments" element={
                 <ProtectedRoute requiredPermission="manage_payments"><Payments /></ProtectedRoute>
+              } />
+              <Route path="expenses" element={
+                <ProtectedRoute requiredPermission="manage_payments"><Expenses /></ProtectedRoute>
               } />
               <Route path="financial-reports" element={
                 <ProtectedRoute requiredPermission="view_reports"><FinancialReports /></ProtectedRoute>

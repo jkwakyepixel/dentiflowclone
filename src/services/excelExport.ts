@@ -1,13 +1,14 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { format, parseISO, isSameMonth, subMonths, getDaysInMonth, getDate } from 'date-fns';
-import type { Invoice, Patient, Payment } from '../types';
+import type { Invoice, Patient, Payment, Expense } from '../types';
 
 export const exportFinancialTrackerExcel = async (
   clinicName: string,
   patients: Patient[],
   invoices: Invoice[],
   payments: Payment[],
+  expenses: Expense[],
   selectedMonth?: string // YYYY-MM format, e.g. "2026-08"
 ) => {
   const wb = new ExcelJS.Workbook();
@@ -62,8 +63,11 @@ export const exportFinancialTrackerExcel = async (
   const overdueInvoicesCount = currentInvoices.filter(i => new Date(i.dueDate) < new Date() && i.balance > 0).length;
   const discountsGiven = currentInvoices.reduce((sum, inv) => sum + (Number(inv.discount) || 0), 0);
   
-  // Expenses / Net Profit (Calculated as 0 since we don't have expenses, net profit = revenue)
-  const expensesPaid = 0.00;
+  // Expenses / Net Profit
+  const currentExpenses = expenses.filter(exp => {
+    try { return isSameMonth(parseISO(exp.date), filterDate); } catch { return false; }
+  });
+  const expensesPaid = currentExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const netProfit = currentRevenue - expensesPaid;
   const collectionRate = currentBilled > 0 ? (currentRevenue / currentBilled) : 1;
 
@@ -223,62 +227,69 @@ export const exportFinancialTrackerExcel = async (
   buildKPI(10, 5, '📅 Revenue MoM Δ %', revMoM, 'FF000000', 'FFFFFFFF', true, false);
   buildKPI(10, 7, '💵 Avg Transaction (GHS)', avgTransaction, 'FFD97706', 'FFFDF5E6', false, true);
 
+  // Row 12-13 (Profitability)
+  buildKPI(12, 1, '💸 Expenses Paid (GHS)', expensesPaid, 'FF000000', 'FFFFFFFF', false, true);
+  buildKPI(12, 3, '📈 Net Profit (GHS)', netProfit, 'FF166534', 'FFE6F4EA', false, true);
+  ws.mergeCells('E12:H13');
+  const emptyVal = ws.getCell('E12');
+  setBg(emptyVal, 'FFFDF5E6');
+
   // --- Daily Performance ---
-  ws.mergeCells('A13:H13');
-  const dPerf = ws.getCell('A13');
+  ws.mergeCells('A15:H15');
+  const dPerf = ws.getCell('A15');
   dPerf.value = 'DAILY PERFORMANCE';
   setFont(dPerf, 10, true, 'FFFFFFFF');
   setBg(dPerf, 'FF0F2C1A');
 
-  ws.mergeCells('A14:C14');
-  ws.mergeCells('A15:C15');
-  ws.getCell('A14').value = '📅 Working Days with Revenue';
-  ws.getCell('A15').value = workingDays;
-  setFont(ws.getCell('A14'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('A14'), 'FF164B2C'); setBorder(ws.getCell('A14'));
-  setFont(ws.getCell('A15'), 12, true, 'FF000000'); setBg(ws.getCell('A15'), 'FFFFFFFF'); setBorder(ws.getCell('A15'));
+  ws.mergeCells('A16:C16');
+  ws.mergeCells('A17:C17');
+  ws.getCell('A16').value = '📅 Working Days with Revenue';
+  ws.getCell('A17').value = workingDays;
+  setFont(ws.getCell('A16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('A16'), 'FF164B2C'); setBorder(ws.getCell('A16'));
+  setFont(ws.getCell('A17'), 12, true, 'FF000000'); setBg(ws.getCell('A17'), 'FFFFFFFF'); setBorder(ws.getCell('A17'));
 
-  ws.mergeCells('D14:E14');
-  ws.mergeCells('D15:E15');
-  ws.getCell('D14').value = '💸 Revenue per Working Day (GHS)';
-  ws.getCell('D15').value = revPerWorkingDay;
-  ws.getCell('D15').numFmt = '#,##0.00';
-  setFont(ws.getCell('D14'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('D14'), 'FF164B2C'); setBorder(ws.getCell('D14'));
-  setFont(ws.getCell('D15'), 12, true, 'FFDC2626'); setBg(ws.getCell('D15'), 'FFFCE8E6'); setBorder(ws.getCell('D15'));
+  ws.mergeCells('D16:E16');
+  ws.mergeCells('D17:E17');
+  ws.getCell('D16').value = '💸 Revenue per Working Day (GHS)';
+  ws.getCell('D17').value = revPerWorkingDay;
+  ws.getCell('D17').numFmt = '#,##0.00';
+  setFont(ws.getCell('D16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('D16'), 'FF164B2C'); setBorder(ws.getCell('D16'));
+  setFont(ws.getCell('D17'), 12, true, 'FFDC2626'); setBg(ws.getCell('D17'), 'FFFCE8E6'); setBorder(ws.getCell('D17'));
 
-  ws.mergeCells('F14:H14');
-  ws.mergeCells('F15:H15');
-  ws.getCell('F14').value = '🚀 Implied Monthly Run Rate (GHS)';
-  ws.getCell('F15').value = runRate;
-  ws.getCell('F15').numFmt = '#,##0.00';
-  setFont(ws.getCell('F14'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('F14'), 'FF164B2C'); setBorder(ws.getCell('F14'));
-  setFont(ws.getCell('F15'), 12, true, 'FF166534'); setBg(ws.getCell('F15'), 'FFE6F4EA'); setBorder(ws.getCell('F15'));
+  ws.mergeCells('F16:H16');
+  ws.mergeCells('F17:H17');
+  ws.getCell('F16').value = '🚀 Implied Monthly Run Rate (GHS)';
+  ws.getCell('F17').value = runRate;
+  ws.getCell('F17').numFmt = '#,##0.00';
+  setFont(ws.getCell('F16'), 9, true, 'FFFFFFFF'); setBg(ws.getCell('F16'), 'FF164B2C'); setBorder(ws.getCell('F16'));
+  setFont(ws.getCell('F17'), 12, true, 'FF166534'); setBg(ws.getCell('F17'), 'FFE6F4EA'); setBorder(ws.getCell('F17'));
 
   // --- Insight String ---
-  ws.mergeCells('A17:H17');
-  const insight = ws.getCell('A17');
-  insight.value = `💡 Revenue: GHS ${currentRevenue.toFixed(2)} (${(collectionRate*100).toFixed(1)}% collection rate) | GHS ${currentOutstanding.toFixed(2)} still outstanding on invoices | ${overdueInvoicesCount} HIGH-priority flag(s) to review`;
+  ws.mergeCells('A19:H19');
+  const insight = ws.getCell('A19');
+  insight.value = `💡 Revenue: GHS ${currentRevenue.toFixed(2)} | Expenses: GHS ${expensesPaid.toFixed(2)} | Net Profit: GHS ${netProfit.toFixed(2)} | ${overdueInvoicesCount} HIGH-priority overdue flag(s)`;
   setFont(insight, 9, false, 'FF555555');
   setBg(insight, 'FFF4F6F8');
 
   // --- Payment Methods ---
-  ws.mergeCells('A19:D19');
-  const payHeader = ws.getCell('A19');
+  ws.mergeCells('A21:D21');
+  const payHeader = ws.getCell('A21');
   payHeader.value = 'REVENUE BY PAYMENT METHOD';
   setFont(payHeader, 10, true, 'FFFFFFFF');
   setBg(payHeader, 'FF0F2C1A');
 
-  ws.mergeCells('A20:B20');
-  ws.getCell('A20').value = 'Method';
-  ws.getCell('C20').value = 'Amount (GHS)';
-  ws.getCell('D20').value = '% of Revenue';
-  ['A20', 'C20', 'D20'].forEach(c => {
+  ws.mergeCells('A22:B22');
+  ws.getCell('A22').value = 'Method';
+  ws.getCell('C22').value = 'Amount (GHS)';
+  ws.getCell('D22').value = '% of Revenue';
+  ['A22', 'C22', 'D22'].forEach(c => {
     setFont(ws.getCell(c), 9, true, 'FFFFFFFF');
     setBg(ws.getCell(c), 'FF164B2C');
     setBorder(ws.getCell(c));
     ws.getCell(c).alignment = { horizontal: 'center' };
   });
 
-  let r = 21;
+  let r = 23;
   for (const [method, amount] of Object.entries(methodTotals)) {
     ws.mergeCells(`A${r}:B${r}`);
     ws.getCell(`A${r}`).value = method;
@@ -365,6 +376,34 @@ export const exportFinancialTrackerExcel = async (
   });
 
   wsPayments.getColumn('D').numFmt = '#,##0.00';
+
+  // ==========================================
+  // SHEET 4: DETAILED EXPENSES
+  // ==========================================
+  const wsExpenses = wb.addWorksheet('Expenses');
+  wsExpenses.columns = [
+    { header: 'Date', key: 'date', width: 15 },
+    { header: 'Category', key: 'category', width: 25 },
+    { header: 'Description', key: 'description', width: 40 },
+    { header: 'Amount (GHS)', key: 'amount', width: 15 },
+    { header: 'Recorded By', key: 'recordedBy', width: 20 },
+  ];
+
+  // Style Header
+  wsExpenses.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  wsExpenses.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF164B2C' } };
+
+  currentExpenses.forEach(e => {
+    wsExpenses.addRow({
+      date: e.date?.split('T')[0] || e.date?.split(' ')[0],
+      category: e.category,
+      description: e.description,
+      amount: Number(e.amount) || 0,
+      recordedBy: e.recordedBy || 'System'
+    });
+  });
+
+  wsExpenses.getColumn('D').numFmt = '#,##0.00';
 
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

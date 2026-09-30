@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useClinic } from '../contexts/ClinicContext';
 import { useInvoices } from '../hooks/useInvoices';
 import { usePatients } from '../hooks/usePatients';
+import { usePayments } from '../hooks/usePayments';
+import { useExpenses } from '../hooks/useExpenses';
 import { exportFinancialTrackerExcel } from '../services/excelExport';
 import { ExportModal } from '../components/ui/ExportModal';
 import type { Invoice, Patient } from '../types';
@@ -34,6 +36,9 @@ export default function Invoices() {
   const navigate = useNavigate();
   const { invoices, removeInvoice, editInvoice, loading: invoicesLoading } = useInvoices();
   const { patients, loading: patientsLoading } = usePatients();
+  const clinicId = userData?.clinicId || 'demo-clinic';
+  const { payments } = usePayments();
+  const { expenses } = useExpenses(clinicId);
   const loading = invoicesLoading || patientsLoading;
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,8 +51,6 @@ export default function Invoices() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  const clinicId = userData?.clinicId || 'demo-clinic';
 
   const filteredInvoices = invoices.filter(i => {
     if ((i.type || 'Invoice') !== activeTab) return false;
@@ -582,7 +585,7 @@ export default function Invoices() {
         isOpen={isExportModalOpen} 
         onClose={() => setIsExportModalOpen(false)} 
         onExport={(selectedMonth) => {
-          exportFinancialTrackerExcel(clinicProfile.name || 'Bright Smile Dental Clinic', patients, invoices, [], selectedMonth);
+          exportFinancialTrackerExcel(clinicProfile.name || 'Bright Smile Dental Clinic', patients, invoices, payments, expenses, selectedMonth);
         }} 
       />
     </div>

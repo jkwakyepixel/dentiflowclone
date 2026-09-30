@@ -269,3 +269,19 @@ export interface PatientXRay {
   dateUploaded: string;
   createdAt?: any;
 }
+
+// ── Expenses ──
+
+export interface Expense {
+  id?: string;
+  clinicId: string;
+  category: string;
+  amount: number;
+  description: string;
+  date: string;
+  recordedBy: string;
+  createdAt?: any;
+  updatedAt?: any;
+  isDeleted?: boolean;
+}
+

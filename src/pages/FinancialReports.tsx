@@ -5,9 +5,10 @@ import { useClinic } from '../contexts/ClinicContext';
 import { usePatients } from '../hooks/usePatients';
 import { useInvoices } from '../hooks/useInvoices';
 import { usePayments } from '../hooks/usePayments';
+import { useExpenses } from '../hooks/useExpenses';
 import { exportFinancialTrackerExcel } from '../services/excelExport';
 import { ExportModal } from '../components/ui/ExportModal';
-import type { Invoice, Patient, Payment } from '../types';
+import type { Invoice, Patient, Payment, Expense } from '../types';
 import { 
   DollarSign, 
   FileText, 
@@ -46,6 +47,8 @@ export default function FinancialReports() {
   const { patients } = usePatients();
   const { invoices } = useInvoices();
   const { payments } = usePayments();
+  const clinicId = userData?.clinicId || 'demo-clinic';
+  const { expenses } = useExpenses(clinicId);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -53,8 +56,6 @@ export default function FinancialReports() {
     'Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year'
   >('This Month');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
-
-  const clinicId = userData?.clinicId || 'demo-clinic';
 
   const handleExportExcel = async (selectedMonth: string) => {
     try {
@@ -64,6 +65,7 @@ export default function FinancialReports() {
         patients,
         invoices,
         payments,
+        expenses,
         selectedMonth
       );
       toast.success('Excel workbook exported successfully!');

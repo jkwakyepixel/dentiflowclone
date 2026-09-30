@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Bell,
-  UserCheck
+  UserCheck,
+  TrendingDown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useClinic } from '../../contexts/ClinicContext';
@@ -36,6 +37,7 @@ export const AppLayout = () => {
     { name: 'Patients', path: '/patients', icon: Users, permission: 'manage_patients' },
     { name: 'Invoices', path: '/invoices', icon: FileText, permission: 'manage_invoices' },
     { name: 'Payments', path: '/payments', icon: CreditCard, permission: 'manage_payments' },
+    { name: 'Expenses', path: '/expenses', icon: TrendingDown, permission: 'manage_payments' },
     { name: 'Financial Reports', path: '/financial-reports', icon: BarChart3, permission: 'view_reports' },
     { name: 'Settings', path: '/settings', icon: SettingsIcon, permission: 'manage_settings' },
   ];
