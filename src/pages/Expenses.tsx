@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { expenseService } from '../services/expenseService';
 import { toast } from 'react-hot-toast';
+import { isToday, isThisWeek, isThisMonth, isThisYear, parse } from 'date-fns';
 
 const EXPENSE_CATEGORIES = [
   'Salaries & Wages',
@@ -34,6 +35,9 @@ export default function Expenses() {
   const { expenses, loading } = useExpenses(clinicId);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [dateFilter, setDateFilter] = useState('All Time');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
@@ -49,7 +53,31 @@ export default function Expenses() {
     const matchesSearch = exp.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           exp.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || exp.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+
+    let matchesDate = true;
+    if (dateFilter !== 'All Time' && exp.date) {
+      try {
+        let dateObj = new Date(exp.date);
+        if (isNaN(dateObj.getTime())) {
+          dateObj = parse(exp.date, 'yyyy-MM-dd', new Date());
+        }
+        if (dateFilter === 'Today') matchesDate = isToday(dateObj);
+        else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
+        else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
+        else if (dateFilter === 'This Year') matchesDate = isThisYear(dateObj);
+        else if (dateFilter === 'Custom Range' && customStartDate && customEndDate) {
+          const start = new Date(customStartDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+          matchesDate = dateObj >= start && dateObj <= end;
+        }
+      } catch (e) {
+        console.error("Date parsing error", e);
+      }
+    }
+
+    return matchesSearch && matchesCategory && matchesDate;
   });
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
@@ -184,8 +212,8 @@ export default function Expenses() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -195,12 +223,44 @@ export default function Expenses() {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex items-center space-x-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
           <Filter className="w-5 h-5 text-gray-400" />
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 text-sm"
+          >
+            <option value="All Time">All Time</option>
+            <option value="Today">Today</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="This Year">This Year</option>
+            <option value="Custom Range">Custom Range</option>
+          </select>
+
+          {dateFilter === 'Custom Range' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+              <span className="text-gray-500 text-sm">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+          )}
+
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 text-sm"
           >
             <option value="All">All Categories</option>
             {EXPENSE_CATEGORIES.map(cat => (

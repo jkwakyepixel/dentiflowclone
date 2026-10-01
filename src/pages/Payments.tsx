@@ -40,6 +40,8 @@ export default function Payments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All Time');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -216,6 +218,13 @@ export default function Payments() {
         else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
         else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
         else if (dateFilter === 'This Year') matchesDate = isThisYear(dateObj);
+        else if (dateFilter === 'Custom Range' && customStartDate && customEndDate) {
+          const start = new Date(customStartDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(customEndDate);
+          end.setHours(23, 59, 59, 999);
+          matchesDate = dateObj >= start && dateObj <= end;
+        }
       } catch (e) {
         console.error("Date parsing error", e);
       }
@@ -327,7 +336,26 @@ export default function Payments() {
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
             <option value="This Year">This Year</option>
+            <option value="Custom Range">Custom Range</option>
           </select>
+
+          {dateFilter === 'Custom Range' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+              <span className="text-slate-400 text-xs">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="flex-1 sm:flex-initial bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+            </div>
+          )}
 
           <select
             value={methodFilter}
