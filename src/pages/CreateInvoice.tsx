@@ -228,8 +228,32 @@ export default function CreateInvoice() {
         await editInvoice(editInvoiceId, invoiceData as any);
         toast.success(`${isQuotation ? 'Quotation' : 'Invoice'} ${status === 'Draft' ? 'draft saved' : 'updated'} successfully`);
       } else {
-        await addInvoice(invoiceData as any);
+        const newId = await addInvoice(invoiceData as any);
         toast.success(`${isQuotation ? 'Quotation' : 'Invoice'} ${status === 'Draft' ? 'draft saved' : 'created'} successfully`);
+        
+        // CRITICAL FIX: If user entered an initial amount paid on the creation screen,
+        // we MUST generate a formal Payment record so it reflects in the Financial Reports.
+        if (numPaid > 0 && !isQuotation) {
+          const { recordPayment } = await import('../services/paymentService');
+          const { format } = await import('date-fns');
+          const formattedDate = format(new Date(invoiceDate), 'd MMM yyyy');
+          
+          await recordPayment(userData?.clinicId || 'demo-clinic', userData?.id || 'sys', {
+            patientId: invoiceData.patientId,
+            patientName: invoiceData.patientName,
+            invoiceId: newId as unknown as string,
+            invoiceNumber: invoiceNumber || 'INV-GEN', 
+            amount: numPaid,
+            paymentMethod: 'Cash', 
+            reference: 'Initial Payment',
+            paymentDate: formattedDate,
+            recordedBy: userData?.name || 'Clinic Staff',
+            isDeleted: false,
+            notes: 'Recorded during invoice creation'
+          }).catch(err => {
+            console.error("Failed to generate initial payment record:", err);
+          });
+        }
       }
       
       navigate('/invoices');
