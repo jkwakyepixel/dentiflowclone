@@ -220,6 +220,75 @@ export const recordPayment = async (
   return true;
 };
 
+export const updatePayment = async (
+  paymentId: string,
+  clinicId: string,
+  userId: string,
+  updates: Partial<Payment>
+): Promise<void> => {
+  const paymentRef = doc(db, COL, paymentId);
+
+  await runTransaction(db, async (transaction) => {
+    const paymentSnap = await transaction.get(paymentRef);
+    if (!paymentSnap.exists()) throw new Error('Payment not found');
+    const payment = paymentSnap.data();
+
+    if (payment.clinicId !== clinicId) throw new Error('Unauthorized');
+    if (payment.isDeleted) throw new Error('Cannot edit deleted payment');
+
+    const oldAmount = Number(payment.amount) || 0;
+    const newAmount = updates.amount !== undefined ? Number(updates.amount) : oldAmount;
+    const amountDifference = newAmount - oldAmount;
+
+    if (amountDifference !== 0) {
+      const invoiceRef = doc(db, 'invoices', payment.invoiceId);
+      const invoiceSnap = await transaction.get(invoiceRef);
+
+      if (invoiceSnap.exists()) {
+        const invoice = invoiceSnap.data();
+        const currentAmountPaid = Number(invoice.amountPaid) || 0;
+        const newAmountPaid = Math.max(0, currentAmountPaid + amountDifference);
+        
+        const invoiceTotal = Number(invoice.total) || 0;
+        const newBalance = Math.max(0, invoiceTotal - newAmountPaid);
+
+        let newStatus = invoice.status;
+        if (newAmountPaid <= 0) newStatus = 'Unpaid';
+        else if (newBalance <= 0) newStatus = 'Paid';
+        else newStatus = 'Partially Paid';
+
+        transaction.update(invoiceRef, {
+          amountPaid: newAmountPaid,
+          balance: newBalance,
+          status: newStatus,
+          updatedAt: serverTimestamp()
+        });
+      }
+    }
+
+    const safeUpdates: any = {};
+    if (updates.amount !== undefined) safeUpdates.amount = newAmount;
+    if (updates.paymentDate !== undefined) safeUpdates.paymentDate = updates.paymentDate;
+    if (updates.paymentMethod !== undefined) safeUpdates.paymentMethod = updates.paymentMethod;
+    if (updates.reference !== undefined) safeUpdates.reference = updates.reference;
+    if (updates.notes !== undefined) safeUpdates.notes = updates.notes;
+
+    transaction.update(paymentRef, safeUpdates);
+    
+    // Add audit log
+    const logRef = doc(collection(db, 'auditLogs'));
+    transaction.set(logRef, {
+      clinicId,
+      userId,
+      action: 'PAYMENT_UPDATED',
+      entity: 'payment',
+      entityId: paymentId,
+      details: `Updated payment for invoice ${payment.invoiceNumber}`,
+      createdAt: serverTimestamp()
+    });
+  });
+};
+
 /**
  * Soft-delete a payment and reverse the invoice balance.
  *

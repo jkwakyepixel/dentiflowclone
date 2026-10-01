@@ -5,7 +5,8 @@ import {
   getPaymentsByPatient,
   getPaymentsByInvoice,
   recordPayment, 
-  deletePayment 
+  deletePayment,
+  updatePayment
 } from '../services/paymentService';
 import { useAuth } from '../contexts/AuthContext';
 import type { Payment } from '../types';
@@ -53,6 +54,11 @@ export function usePayments() {
     return await deletePayment(id, clinicId, userData.id);
   };
 
+  const editPayment = async (id: string, updates: Partial<Payment>) => {
+    if (!clinicId || !userData?.id) throw new Error('Not authenticated');
+    return await updatePayment(id, clinicId, userData.id, updates);
+  };
+
   const getPayment = async (id: string) => {
     if (!clinicId) return null;
     return await getPaymentById(id, clinicId);
@@ -74,6 +80,7 @@ export function usePayments() {
     error,
     addPayment,
     removePayment,
+    editPayment,
     getPayment,
     getByPatient,
     getByInvoice

@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   Check,
   Receipt as ReceiptIcon,
-  Trash2
+  Trash2,
+  Edit
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
@@ -31,13 +32,14 @@ export default function Payments() {
   const urlPatientId = searchParams.get('patientId');
   const urlInvoiceId = searchParams.get('invoiceId');
 
-  const { payments, loading: pmtsLoading, addPayment, removePayment } = usePayments();
+  const { payments, loading: pmtsLoading, addPayment, removePayment, editPayment } = usePayments();
   const { invoices, loading: invsLoading } = useInvoices();
   const { patients, loading: patsLoading } = usePatients();
   
   const loading = pmtsLoading || invsLoading || patsLoading;
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All Time');
@@ -90,7 +92,7 @@ export default function Payments() {
     }
   }, [urlPatientId, urlInvoiceId, invsLoading, invoices]);
 
-  const activePatientInvoices = invoices.filter(i => i.patientId === selectedPatientId && i.balance > 0);
+  const activePatientInvoices = invoices.filter(i => i.patientId === selectedPatientId && (i.balance > 0 || i.id === selectedInvoiceId || i.invoiceNumber === selectedInvoiceId));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,52 +108,74 @@ export default function Payments() {
       return;
     }
 
-    if (paymentAmount > inv.balance) {
-      toast.error('Payment cannot exceed remaining invoice balance');
-      return;
+    if (editingPayment) {
+      const amountDiff = paymentAmount - Number(editingPayment.amount);
+      if (amountDiff > inv.balance) {
+        toast.error('Increased payment amount cannot exceed remaining invoice balance');
+        return;
+      }
+    } else {
+      if (paymentAmount > inv.balance) {
+        toast.error('Payment cannot exceed remaining invoice balance');
+        return;
+      }
     }
 
     setIsSubmitting(true);
-    const newRef = reference || `REF-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newReceiptNum = `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newRef = reference || (editingPayment ? editingPayment.reference : `REF-${Math.floor(1000 + Math.random() * 9000)}`);
     const formattedDate = format(new Date(paymentDate), 'd MMM yyyy');
-    const remainingBal = Math.max(0, inv.balance - paymentAmount);
 
     try {
-      await addPayment({
-        patientId: inv.patientId,
-        patientName: inv.patientName,
-        invoiceId: inv.id || 'inv-gen',
-        invoiceNumber: inv.invoiceNumber,
-        amount: paymentAmount,
-        paymentMethod,
-        reference: newRef,
-        paymentDate: formattedDate,
-        notes,
-        recordedBy: userData?.name || 'Clinic Staff',
-        isDeleted: false
-      });
-      
-      toast.success('Payment recorded successfully');
-      setIsModalOpen(false);
-      
-      // Auto-open branded payment receipt!
-      setReceiptData({
-        receiptNumber: newReceiptNum,
-        patientName: inv.patientName,
-        invoiceNumber: inv.invoiceNumber,
-        amount: paymentAmount,
-        paymentMethod,
-        reference: newRef,
-        paymentDate: formattedDate,
-        recordedBy: userData?.name || 'Clinic Staff',
-        remainingBalance: remainingBal,
-        notes,
-        invoiceItems: inv.items || [],
-        invoiceTotal: inv.total
-      });
+      if (editingPayment) {
+        await editPayment(editingPayment.id!, {
+          amount: paymentAmount,
+          paymentMethod,
+          reference: newRef,
+          paymentDate: formattedDate,
+          notes
+        });
+        toast.success('Payment updated successfully');
+        setIsModalOpen(false);
+      } else {
+        const remainingBal = Math.max(0, inv.balance - paymentAmount);
+        const newReceiptNum = `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        
+        await addPayment({
+          patientId: inv.patientId,
+          patientName: inv.patientName,
+          invoiceId: inv.id || 'inv-gen',
+          invoiceNumber: inv.invoiceNumber,
+          amount: paymentAmount,
+          paymentMethod,
+          reference: newRef,
+          paymentDate: formattedDate,
+          notes,
+          recordedBy: userData?.name || 'Clinic Staff',
+          isDeleted: false
+        });
+        
+        toast.success('Payment recorded successfully');
+        setIsModalOpen(false);
+        
+        // Auto-open branded payment receipt!
+        setReceiptData({
+          receiptNumber: newReceiptNum,
+          patientName: inv.patientName,
+          invoiceNumber: inv.invoiceNumber,
+          amount: paymentAmount,
+          paymentMethod,
+          reference: newRef,
+          paymentDate: formattedDate,
+          recordedBy: userData?.name || 'Clinic Staff',
+          remainingBalance: remainingBal,
+          notes,
+          invoiceItems: inv.items || [],
+          invoiceTotal: inv.total
+        });
+      }
 
       // Reset form
+      setEditingPayment(null);
       setSelectedPatientId('');
       setSelectedInvoiceId('');
       setAmount('');
@@ -258,7 +282,16 @@ export default function Payments() {
           <p className="text-xs text-slate-400 mt-1">{filteredPayments.length} recorded payments</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingPayment(null);
+            setSelectedPatientId('');
+            setSelectedInvoiceId('');
+            setAmount('');
+            setReference('');
+            setPaymentDate(new Date().toISOString().split('T')[0]);
+            setNotes('');
+            setIsModalOpen(true);
+          }}
           className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto"
         >
           <CreditCard size={15} />
@@ -427,6 +460,30 @@ export default function Payments() {
                       <ReceiptIcon size={16} />
                     </button>
                     <button
+                      onClick={() => {
+                        setEditingPayment(p);
+                        setSelectedPatientId(p.patientId);
+                        setSelectedInvoiceId(p.invoiceId);
+                        setAmount(p.amount.toString());
+                        setPaymentMethod(p.paymentMethod as any);
+                        setReference(p.reference || '');
+                        
+                        // Convert 'd MMM yyyy' to 'yyyy-MM-dd' for the <input type="date">
+                        let parsedDate = new Date();
+                        try {
+                          parsedDate = parse(p.paymentDate, 'd MMM yyyy', new Date());
+                        } catch(e) {}
+                        setPaymentDate(format(parsedDate, 'yyyy-MM-dd'));
+                        setNotes(p.notes || '');
+                        
+                        setIsModalOpen(true);
+                      }}
+                      title="Edit Payment"
+                      className="text-slate-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-amber-50 transition-colors inline-flex"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
                       onClick={async () => {
                         if (!window.confirm('Are you sure you want to delete this payment? This will update the invoice balance.')) return;
                         try {
@@ -473,7 +530,7 @@ export default function Payments() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150 my-auto">
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">Record Payment</h2>
+              <h2 className="text-sm font-bold text-slate-900">{editingPayment ? 'Edit Payment' : 'Record Payment'}</h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
@@ -490,7 +547,7 @@ export default function Payments() {
                   <label className="block font-medium text-slate-700 mb-1">Patient</label>
                   <select
                     required
-                    value={selectedPatientId}
+                    disabled={!!editingPayment} value={selectedPatientId}
                     onChange={(e) => {
                       setSelectedPatientId(e.target.value);
                       setSelectedInvoiceId('');
@@ -509,7 +566,7 @@ export default function Payments() {
                   <label className="block font-medium text-slate-700 mb-1">Invoice</label>
                   <select
                     required
-                    value={selectedInvoiceId}
+                    disabled={!!editingPayment} value={selectedInvoiceId}
                     onChange={(e) => {
                       setSelectedInvoiceId(e.target.value);
                       const inv = activePatientInvoices.find(i => (i.id || i.invoiceNumber) === e.target.value);
@@ -624,7 +681,7 @@ export default function Payments() {
                   className="px-4 py-2 text-xs font-semibold text-white bg-[#2563eb] hover:bg-blue-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {isSubmitting && <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  {isSubmitting ? 'Recording...' : 'Record payment'}
+                  {isSubmitting ? (editingPayment ? 'Saving...' : 'Recording...') : (editingPayment ? 'Save Changes' : 'Record Payment')}
                 </button>
               </div>
             </form>
