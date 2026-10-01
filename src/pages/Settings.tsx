@@ -505,7 +505,7 @@ export default function Settings() {
               </p>
             </div>
             
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3">
               <button
                 type="button"
                 onClick={async () => {
@@ -524,6 +524,45 @@ export default function Settings() {
               >
                 <Sparkles size={14} />
                 Sync Missing Payments
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const { getDocs, collection, query, where } = await import('firebase/firestore');
+                    const { db } = await import('../config/firebase');
+                    const cid = userData?.clinicId || 'demo-clinic';
+                    
+                    const iSnap = await getDocs(query(collection(db, 'invoices'), where('clinicId', '==', cid)));
+                    const pSnap = await getDocs(query(collection(db, 'payments'), where('clinicId', '==', cid)));
+                    
+                    const invs = iSnap.docs.map(d => ({id: d.id, ...(d.data() as any)}));
+                    const pays = pSnap.docs.map(d => d.data() as any).filter(p => !p.isDeleted);
+                    
+                    const invPaid = invs.filter(i => (i.type || 'Invoice') === 'Invoice').reduce((s, i) => s + (Number(i.amountPaid) || 0), 0);
+                    const payTotal = pays.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                    
+                    let msg = `DIAGNOSTICS:\n\nTotal 'Amount Paid' on Invoices: ${invPaid}\nTotal in Payments Ledger: ${payTotal}\nDiscrepancy: ${invPaid - payTotal}\n\n`;
+                    if (invPaid - payTotal !== 0) {
+                      msg += "Mismatched Invoices:\n";
+                      invs.filter(i => (i.type || 'Invoice') === 'Invoice').forEach(inv => {
+                        const amtPaid = Number(inv.amountPaid) || 0;
+                        const sumPays = pays.filter(p => p.invoiceId === inv.id).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                        if (amtPaid !== sumPays) {
+                          msg += `- ${inv.invoiceNumber}: Invoice claims ${amtPaid}, Ledger has ${sumPays}\n`;
+                        }
+                      });
+                    }
+                    alert(msg);
+                  } catch (err: any) {
+                    alert('Error: ' + err.message);
+                  }
+                }}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-2.5 rounded-xl border border-slate-300 transition-colors flex items-center gap-2 text-xs shadow-2xs"
+              >
+                <Search size={14} />
+                Run Diagnostics
               </button>
             </div>
           </div>
