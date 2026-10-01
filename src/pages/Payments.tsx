@@ -185,14 +185,20 @@ export default function Payments() {
   // Metric Totals
   const isPaymentThisMonth = (dateStr: string) => {
     try {
-      const dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      let dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) {
+        dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      }
       return isThisMonth(dateObj);
     } catch { return false; }
   };
 
   const isPaymentToday = (dateStr: string) => {
     try {
-      const dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      let dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) {
+        dateObj = parse(dateStr, 'd MMM yyyy', new Date());
+      }
       return isToday(dateObj);
     } catch { return false; }
   };
