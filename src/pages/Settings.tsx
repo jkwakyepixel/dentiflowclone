@@ -491,6 +491,42 @@ export default function Settings() {
               </div>
             </div>
           </form>
+
+          {/* Data Recovery / Maintenance Block */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Sparkles size={16} className="text-amber-500" />
+                System Maintenance
+              </h2>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                If your Financial Reports are missing payments that were recorded directly on the 
+                "Create Invoice" screen, run this sync to auto-generate those missing formal payment records.
+              </p>
+            </div>
+            
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const toastId = toast.loading('Syncing missing payments...');
+                    const { fixMissingPayments } = await import('../services/recoverPayments');
+                    const count = await fixMissingPayments();
+                    toast.dismiss(toastId);
+                    toast.success(`Sync complete! Recovered ${count} missing payment records.`);
+                  } catch (err: any) {
+                    console.error(err);
+                    toast.error('Failed to sync: ' + err.message);
+                  }
+                }}
+                className="bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold px-5 py-2.5 rounded-xl border border-amber-200 transition-colors flex items-center gap-2 text-xs shadow-2xs"
+              >
+                <Sparkles size={14} />
+                Sync Missing Payments
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

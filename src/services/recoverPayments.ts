@@ -7,11 +7,11 @@ export async function fixMissingPayments() {
 
   // 1. Get all invoices
   const invoicesSnap = await getDocs(collection(db, 'invoices'));
-  const invoices = invoicesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const invoices = invoicesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
   // 2. Get all payments
   const paymentsSnap = await getDocs(collection(db, 'payments'));
-  const payments = paymentsSnap.docs.map(d => d.data());
+  const payments = paymentsSnap.docs.map(d => d.data() as any);
 
   for (const inv of invoices) {
     const amtPaid = Number(inv.amountPaid) || 0;
