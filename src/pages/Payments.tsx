@@ -17,7 +17,8 @@ import {
   Printer,
   CheckCircle2,
   Check,
-  Receipt as ReceiptIcon
+  Receipt as ReceiptIcon,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format, parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
@@ -30,7 +31,7 @@ export default function Payments() {
   const urlPatientId = searchParams.get('patientId');
   const urlInvoiceId = searchParams.get('invoiceId');
 
-  const { payments, loading: pmtsLoading, addPayment } = usePayments();
+  const { payments, loading: pmtsLoading, addPayment, removePayment } = usePayments();
   const { invoices, loading: invsLoading } = useInvoices();
   const { patients, loading: patsLoading } = usePatients();
   
@@ -417,13 +418,28 @@ export default function Payments() {
                     {p.reference || '—'}
                   </td>
                   <td className="py-3.5 text-slate-600 whitespace-nowrap">{p.recordedBy || 'Clinic Staff'}</td>
-                  <td className="py-3.5 text-right whitespace-nowrap">
+                  <td className="py-3.5 text-right whitespace-nowrap space-x-1">
                     <button
                       onClick={() => handleOpenReceiptFromRow(p)}
                       title="View Official Receipt"
                       className="text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors inline-flex"
                     >
                       <ReceiptIcon size={16} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!window.confirm('Are you sure you want to delete this payment? This will update the invoice balance.')) return;
+                        try {
+                          await removePayment(p.id!);
+                          toast.success('Payment deleted successfully');
+                        } catch (err: any) {
+                          toast.error(err.message || 'Failed to delete payment');
+                        }
+                      }}
+                      title="Delete Payment"
+                      className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors inline-flex"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

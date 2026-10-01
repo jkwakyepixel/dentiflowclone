@@ -540,20 +540,40 @@ export default function Settings() {
                     const invs = iSnap.docs.map(d => ({id: d.id, ...(d.data() as any)}));
                     const pays = pSnap.docs.map(d => d.data() as any).filter(p => !p.isDeleted);
                     
-                    const invPaid = invs.filter(i => (i.type || 'Invoice') === 'Invoice').reduce((s, i) => s + (Number(i.amountPaid) || 0), 0);
-                    const payTotal = pays.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                    const { parseISO, isSameMonth, parse } = await import('date-fns');
+                    const safeParse = (val: any) => {
+                      if (!val) return null;
+                      if (typeof val?.toDate === 'function') return val.toDate();
+                      if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+                      try {
+                        let d = new Date(val);
+                        if (isNaN(d.getTime())) d = parse(val, 'd MMM yyyy', new Date());
+                        return isNaN(d.getTime()) ? null : d;
+                      } catch { return null; }
+                    };
+
+                    const targetMonth = new Date(2026, 8, 1); // September 2026 (0-indexed)
+
+                    const sepInvoices = invs.filter(i => (i.type || 'Invoice') === 'Invoice' && safeParse(i.invoiceDate || i.createdAt) && isSameMonth(safeParse(i.invoiceDate || i.createdAt)!, targetMonth));
+                    const sepPayments = pays.filter(p => safeParse(p.paymentDate) && isSameMonth(safeParse(p.paymentDate)!, targetMonth));
                     
-                    let msg = `DIAGNOSTICS:\n\nTotal 'Amount Paid' on Invoices: ${invPaid}\nTotal in Payments Ledger: ${payTotal}\nDiscrepancy: ${invPaid - payTotal}\n\n`;
-                    if (invPaid - payTotal !== 0) {
-                      msg += "Mismatched Invoices:\n";
-                      invs.filter(i => (i.type || 'Invoice') === 'Invoice').forEach(inv => {
-                        const amtPaid = Number(inv.amountPaid) || 0;
-                        const sumPays = pays.filter(p => p.invoiceId === inv.id).reduce((s, p) => s + (Number(p.amount) || 0), 0);
-                        if (amtPaid !== sumPays) {
-                          msg += `- ${inv.invoiceNumber}: Invoice claims ${amtPaid}, Ledger has ${sumPays}\n`;
-                        }
-                      });
-                    }
+                    const sepInvPaid = sepInvoices.reduce((s, i) => s + (Number(i.amountPaid) || 0), 0);
+                    const sepPayTotal = sepPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                    
+                    let msg = `SEPTEMBER 2026 DIAGNOSTICS:\n\n`;
+                    msg += `Sum of 'Amount Paid' on September Invoices: ${sepInvPaid}\n`;
+                    msg += `Sum of all Payments made in September: ${sepPayTotal}\n`;
+                    msg += `Discrepancy for September: ${sepInvPaid - sepPayTotal}\n\n`;
+
+                    msg += "Why are they different?\n";
+                    msg += "Because an invoice issued in September might be paid in October, OR an invoice issued in August might be paid in September.\n\n";
+
+                    msg += `GLOBAL DIAGNOSTICS (All Time):\n`;
+                    const globalInvPaid = invs.filter(i => (i.type || 'Invoice') === 'Invoice').reduce((s, i) => s + (Number(i.amountPaid) || 0), 0);
+                    const globalPayTotal = pays.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+                    msg += `Global Invoices Paid: ${globalInvPaid}\n`;
+                    msg += `Global Payments Ledger: ${globalPayTotal}\n`;
+
                     alert(msg);
                   } catch (err: any) {
                     alert('Error: ' + err.message);
