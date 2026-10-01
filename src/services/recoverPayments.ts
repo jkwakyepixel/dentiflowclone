@@ -1,16 +1,18 @@
 import { getDocs, collection, query, doc, setDoc, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
-export async function fixMissingPayments() {
-  console.log("Starting missing payments sync...");
+export async function fixMissingPayments(clinicId: string) {
+  console.log("Starting missing payments sync for clinic:", clinicId);
   let fixedCount = 0;
 
-  // 1. Get all invoices
-  const invoicesSnap = await getDocs(collection(db, 'invoices'));
+  // 1. Get all invoices for this clinic
+  const invoicesQuery = query(collection(db, 'invoices'), where('clinicId', '==', clinicId));
+  const invoicesSnap = await getDocs(invoicesQuery);
   const invoices = invoicesSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
-  // 2. Get all payments
-  const paymentsSnap = await getDocs(collection(db, 'payments'));
+  // 2. Get all payments for this clinic
+  const paymentsQuery = query(collection(db, 'payments'), where('clinicId', '==', clinicId));
+  const paymentsSnap = await getDocs(paymentsQuery);
   const payments = paymentsSnap.docs.map(d => d.data() as any);
 
   for (const inv of invoices) {

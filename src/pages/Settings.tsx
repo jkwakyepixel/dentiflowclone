@@ -512,7 +512,7 @@ export default function Settings() {
                   try {
                     const toastId = toast.loading('Syncing missing payments...');
                     const { fixMissingPayments } = await import('../services/recoverPayments');
-                    const count = await fixMissingPayments();
+                    const count = await fixMissingPayments(userData?.clinicId || 'demo-clinic');
                     toast.dismiss(toastId);
                     toast.success(`Sync complete! Recovered ${count} missing payment records.`);
                   } catch (err: any) {
