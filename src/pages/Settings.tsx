@@ -584,6 +584,26 @@ export default function Settings() {
                 <Search size={14} />
                 Run Diagnostics
               </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm("This will forcefully align all Payments with their Invoices. It will recalculate balances and forcefully change Payment Dates to match their parent Invoice Dates so that Monthly Excel reports match 100%. Are you sure?")) return;
+                  try {
+                    const toastId = toast.loading('Reconciling database...');
+                    const { forceReconcileDatabase } = await import('../services/forceReconcile');
+                    const count = await forceReconcileDatabase(userData?.clinicId || 'demo-clinic');
+                    toast.dismiss(toastId);
+                    toast.success(`Reconciliation complete! Updated ${count} records.`);
+                  } catch (err: any) {
+                    toast.error('Failed: ' + err.message);
+                  }
+                }}
+                className="bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-2 text-xs shadow-2xs"
+              >
+                <Sparkles size={14} />
+                Force Reconcile Database
+              </button>
             </div>
           </div>
         </div>
