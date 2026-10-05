@@ -94,7 +94,7 @@ export default function Appointments() {
   const [startTime, setStartTime] = useState('08:30');
   const [durationMin, setDurationMin] = useState(30);
   const [appointmentType, setAppointmentType] = useState('Consultation');
-  const [dentist, setDentist] = useState(userData?.name || '');
+  const [dentist, setDentist] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'Scheduled' | 'Arrived' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show'>('Scheduled');
   const [saving, setSaving] = useState(false);
@@ -666,7 +666,7 @@ export default function Appointments() {
                               </div>
                               <div>
                                 <h4 className="text-xs font-bold">{appt.patientName}</h4>
-                                <p className="text-[11px] opacity-80">{appt.appointmentType} · {appt.room || 'Surgery Room 1'} · Dr. {appt.dentist}</p>
+                                <p className="text-[11px] opacity-80">{appt.appointmentType} · {appt.room || 'Surgery Room 1'} · {appt.dentist ? (appt.dentist.startsWith('Dr.') ? appt.dentist : 'Dr. ' + appt.dentist) : 'Unassigned'}</p>
                               </div>
                             </div>
 
@@ -720,7 +720,7 @@ export default function Appointments() {
                     <td className="py-3.5 font-bold text-slate-900">{item.patientName}</td>
                     <td className="py-3.5 text-slate-600">{item.room || 'Surgery Room 1'}</td>
                     <td className="py-3.5 text-slate-600">{item.appointmentType}</td>
-                    <td className="py-3.5 text-slate-500">{item.dentist.startsWith('Dr.') ? item.dentist : `Dr. ${item.dentist}`}</td>
+                    <td className="py-3.5 text-slate-500">{item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : `Dr. ${item.dentist}`) : 'Unassigned'}</td>
                     <td className="py-3.5 text-slate-400 max-w-xs truncate">{item.notes || '—'}</td>
                     <td className="py-3.5 text-right whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
@@ -960,7 +960,7 @@ export default function Appointments() {
                     onChange={(e) => setDentist(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs bg-white"
                   >
-                    {clinicProfile?.doctors?.length ? (
+                    <option value="" disabled>Select Doctor...</option> {clinicProfile?.doctors?.length ? (
                       clinicProfile.doctors.map((doc: string) => (
                         <option key={doc} value={doc}>{doc}</option>
                       ))

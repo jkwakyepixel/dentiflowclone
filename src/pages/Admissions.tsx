@@ -102,7 +102,7 @@ export default function Admissions() {
   // Quick Admit Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [patientIdInput, setPatientIdInput] = useState('');
-  const [dentistInput, setDentistInput] = useState('Dr. Sarah Smith');
+  const [dentistInput, setDentistInput] = useState('');
   const [roomInput, setRoomInput] = useState('Surgery Room 1');
   const [startTimeInput, setStartTimeInput] = useState('2:30 PM');
   const [endTimeInput, setEndTimeInput] = useState('3:00 PM');
@@ -138,7 +138,7 @@ export default function Admissions() {
         clinicId,
         patientId: a.patientId,
         patientName: a.patientName,
-        dentist: a.dentist.startsWith('Dr.') ? a.dentist : `Dr. ${a.dentist}`,
+        dentist: a.dentist ? (a.dentist.startsWith('Dr.') ? a.dentist : `Dr. ${a.dentist}`) : 'Unassigned',
         room: (a as any).room || 'Surgery Room 1',
         scheduledTime: `${a.startTime}\n${a.endTime}`,
         arrivalTime: isConfirmed ? a.startTime : '',
@@ -517,7 +517,7 @@ export default function Admissions() {
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">{item.patientName}</h3>
                       <p className="text-xs text-[#0284c7] font-medium mt-0.5">
-                        {item.dentist} · <span className="text-slate-400 font-normal">{item.room || 'Surgery Room 1'}</span>
+                        {item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : 'Dr. ' + item.dentist) : 'Unassigned'} · <span className="text-slate-400 font-normal">{item.room || 'Surgery Room 1'}</span>
                       </p>
                       {item.notes && <p className="text-[11px] text-slate-400 italic mt-0.5">{item.notes}</p>}
                     </div>
@@ -654,7 +654,7 @@ export default function Admissions() {
 
                 {/* Column 3: Doctor / Clinic */}
                 <div className="w-36 lg:w-44 flex-shrink-0 text-[#0284c7] font-medium truncate text-xs">
-                  {item.dentist}
+                  {item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : 'Dr. ' + item.dentist) : 'Unassigned'}
                 </div>
 
                 {/* Column 4: Room */}
@@ -840,11 +840,11 @@ export default function Admissions() {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Doctor / Dentist</label>
                 <select
-                  value={dentistInput}
+                  required value={dentistInput}
                   onChange={(e) => setDentistInput(e.target.value)}
                   className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                 >
-                  {clinicProfile?.doctors?.length ? (
+                  <option value="" disabled>Select Doctor...</option> {clinicProfile?.doctors?.length ? (
                     clinicProfile.doctors.map((doc: string) => (
                       <option key={doc} value={doc}>{doc}</option>
                     ))
