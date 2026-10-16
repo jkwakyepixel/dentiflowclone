@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parse, isToday, isThisWeek, isThisMonth, isThisYear } from 'date-fns';
+import { isDateInFilter } from '../utils/dateUtils';
 
 import { Pagination } from '../components/ui/Pagination';
 
@@ -64,30 +65,7 @@ export default function Invoices() {
     const matchesStatus = statusFilter === 'All' || i.status === statusFilter;
     const matchesPatient = patientFilter === 'All' || i.patientName === patientFilter;
 
-    let matchesDate = true;
-    if (dateFilter !== 'All Time' && i.invoiceDate) {
-      try {
-        // Assume invoiceDate is 'yyyy-MM-dd' or similar, fallback to 'd MMM yyyy' if needed
-        let dateObj = new Date(i.invoiceDate);
-        if (isNaN(dateObj.getTime())) {
-          dateObj = parse(i.invoiceDate, 'd MMM yyyy', new Date());
-        }
-        
-        if (dateFilter === 'Today') matchesDate = isToday(dateObj);
-        else if (dateFilter === 'This Week') matchesDate = isThisWeek(dateObj);
-        else if (dateFilter === 'This Month') matchesDate = isThisMonth(dateObj);
-        else if (dateFilter === 'This Year') matchesDate = isThisYear(dateObj);
-        else if (dateFilter === 'Custom Range' && customStartDate && customEndDate) {
-          const start = new Date(customStartDate);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(customEndDate);
-          end.setHours(23, 59, 59, 999);
-          matchesDate = dateObj >= start && dateObj <= end;
-        }
-      } catch (e) {
-        console.error("Date parsing error", e);
-      }
-    }
+    const matchesDate = isDateInFilter(i.invoiceDate || i.date, dateFilter, customStartDate, customEndDate);
 
     return matchesSearch && matchesStatus && matchesPatient && matchesDate;
   });
@@ -221,6 +199,7 @@ export default function Invoices() {
             <option value="Today">Today</option>
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
+            <option value="Last Month">Last Month</option>
             <option value="This Year">This Year</option>
             <option value="Custom Range">Custom Range</option>
           </select>

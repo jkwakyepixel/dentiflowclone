@@ -24,8 +24,9 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { parse, isToday, isThisWeek, isThisMonth, isThisYear, subMonths, isAfter } from 'date-fns';
+import { parse, isToday, isThisWeek, isThisMonth, isThisYear, subMonths, isAfter, format } from 'date-fns';
 import { Pagination } from '../components/ui/Pagination';
+import { safeParseDate, isDateInFilter } from '../utils/dateUtils';
 
 interface OutstandingInvoice {
   id: string;
@@ -53,8 +54,10 @@ export default function FinancialReports() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const [selectedPeriod, setSelectedPeriod] = useState<
-    'Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year'
+    'Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year' | 'Custom Range'
   >('This Month');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
   const handleExportExcel = async (selectedMonth: string) => {
@@ -77,38 +80,19 @@ export default function FinancialReports() {
     }
   };
 
-  const periods: ('Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year')[] = [
+  const periods: ('Today' | 'This Week' | 'This Month' | 'Last Month' | 'Last 3 Months' | 'This Year' | 'Custom Range')[] = [
     'Today',
     'This Week',
     'This Month',
     'Last Month',
     'Last 3 Months',
-    'This Year'
+    'This Year',
+    'Custom Range'
   ];
 
   const checkDateInPeriod = (dateString: string | undefined) => {
-    if (!dateString) return true; // Include if no date
-    try {
-      let dateObj = new Date(dateString);
-      if (isNaN(dateObj.getTime())) {
-        dateObj = parse(dateString, 'd MMM yyyy', new Date());
-      }
-      
-      const now = new Date();
-      if (selectedPeriod === 'Today') return isToday(dateObj);
-      if (selectedPeriod === 'This Week') return isThisWeek(dateObj);
-      if (selectedPeriod === 'This Month') return isThisMonth(dateObj);
-      if (selectedPeriod === 'Last Month') {
-        const lastMonth = subMonths(now, 1);
-        return dateObj.getMonth() === lastMonth.getMonth() && dateObj.getFullYear() === lastMonth.getFullYear();
-      }
-      if (selectedPeriod === 'Last 3 Months') return isAfter(dateObj, subMonths(now, 3));
-      if (selectedPeriod === 'This Year') return isThisYear(dateObj);
-      
-      return true;
-    } catch (e) {
-      return true;
-    }
+    if (!dateString) return true;
+    return isDateInFilter(dateString, selectedPeriod, customStartDate, customEndDate);
   };
 
   // Filter out quotations globally
@@ -150,17 +134,32 @@ export default function FinancialReports() {
   const itemsPerPage = 10;
   const paginatedOutstandingInvoices = outstandingInvoicesList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Group payments by date for the chart (period-filtered)
-  const paymentsByDate = periodPayments.reduce((acc, p) => {
-    const date = p.paymentDate;
-    if (!acc[date]) acc[date] = 0;
-    acc[date] += Number(p.amount);
-    return acc;
-  }, {} as Record<string, number>);
+  // Group payments by parsed date for the chart (period-filtered)
+  const paymentsByDay: Record<string, { dateObj: Date; label: string; amount: number }> = {};
+  
+  periodPayments.forEach(p => {
+    if (p.isDeleted) return;
+    const d = safeParseDate(p.paymentDate || p.createdAt);
+    if (!d) return;
 
-  const chartBars = Object.entries(paymentsByDate)
-    .map(([date, amount]) => ({ date: date.substring(0, 6), amount }))
-    .slice(-7);
+    const key = format(d, 'yyyy-MM-dd');
+    if (!paymentsByDay[key]) {
+      paymentsByDay[key] = {
+        dateObj: d,
+        label: format(d, 'd MMM'),
+        amount: 0
+      };
+    }
+    paymentsByDay[key].amount += Number(p.amount) || 0;
+  });
+
+  const sortedBars = Object.values(paymentsByDay)
+    .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+  const chartBars = sortedBars.slice(-10).map(b => ({
+    date: b.label,
+    amount: Math.round(b.amount * 100) / 100
+  }));
   
   const maxChartVal = chartBars.length > 0 ? Math.max(...chartBars.map(b => b.amount)) : 800;
 
@@ -238,6 +237,24 @@ export default function FinancialReports() {
               </button>
             ))}
           </div>
+
+          {selectedPeriod === 'Custom Range' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+              <span className="text-slate-400 text-xs">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+            </div>
+          )}
 
           {/* Export to Excel Button matching user format */}
           <button

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePatients } from '../hooks/usePatients';
@@ -23,7 +23,8 @@ import {
   CartesianGrid, 
   Tooltip 
 } from 'recharts';
-import { format } from 'date-fns';
+import { format, isThisMonth } from 'date-fns';
+import { safeParseDate, buildDashboardChartData } from '../utils/dateUtils';
 
 export default function Dashboard() {
   const { userData, currentUser } = useAuth();
@@ -38,7 +39,7 @@ export default function Dashboard() {
     loading: financialsLoading 
   } = useFinancials();
   
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'lastMonth' | 'quarter' | 'year'>('month');
 
   const loading = appointmentsLoading || patientsLoading || financialsLoading;
   const displayName = userData?.name || currentUser?.displayName || userData?.email?.split('@')[0] || currentUser?.email?.split('@')[0] || 'User';
@@ -55,15 +56,18 @@ export default function Dashboard() {
   const todayAppointments = appointments.filter(a => a.date === todayStr);
   const nextAppt = todayAppointments.find(a => a.status === 'Scheduled' || a.status === 'Confirmed');
 
-  const currentMonthStr = format(new Date(), 'MMM yyyy'); // e.g. "Aug 2026"
-  const thisMonthPayments = payments.filter(p => p.paymentDate && p.paymentDate.includes(currentMonthStr));
+  // Revenue This Month - calculated accurately using safeParseDate & isThisMonth
+  const thisMonthPayments = payments.filter(p => {
+    if (p.isDeleted) return false;
+    const d = safeParseDate(p.paymentDate || p.createdAt);
+    return d && isThisMonth(d);
+  });
   const revenueThisMonth = thisMonthPayments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
-  // Dynamic Chart Data Construction (Simple aggregated view)
-  const chartData = [
-    { name: 'Last Month', Revenue: 0, Payments: 0, Outstanding: 0 },
-    { name: 'This Month', Revenue: revenueThisMonth, Payments: revenueThisMonth, Outstanding: outstanding },
-  ];
+  // Dynamic Chart Data Construction corresponding to the selected timeRange
+  const chartData = useMemo(() => {
+    return buildDashboardChartData(invoices, payments, timeRange);
+  }, [invoices, payments, timeRange]);
 
   if (loading) {
     return (
@@ -172,7 +176,7 @@ export default function Dashboard() {
             <p className="text-xs text-slate-400 mt-0.5">Revenue, payments received and outstanding invoices</p>
           </div>
           
-          <div className="inline-flex bg-slate-100/90 p-1 rounded-xl gap-1 self-start sm:self-auto text-xs font-medium">
+          <div className="inline-flex bg-slate-100/90 p-1 rounded-xl gap-1 self-start sm:self-auto text-xs font-medium flex-wrap">
             <button 
               onClick={() => setTimeRange('week')}
               className={`px-3 py-1 rounded-lg transition-all ${timeRange === 'week' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
@@ -184,6 +188,12 @@ export default function Dashboard() {
               className={`px-3 py-1 rounded-lg transition-all ${timeRange === 'month' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
             >
               This month
+            </button>
+            <button 
+              onClick={() => setTimeRange('lastMonth')}
+              className={`px-3 py-1 rounded-lg transition-all ${timeRange === 'lastMonth' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              Last month
             </button>
             <button 
               onClick={() => setTimeRange('quarter')}
