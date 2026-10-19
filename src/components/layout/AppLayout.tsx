@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Calendar as CalendarIcon, 
@@ -25,6 +25,7 @@ export const AppLayout = () => {
   const { userData, currentUser, logout } = useAuth();
   const { clinicProfile } = useClinic();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -121,13 +122,18 @@ export const AppLayout = () => {
                 <Link
                   key={item.name}
                   to={item.path}
+                  target="_self"
                   title={isSidebarCollapsed ? item.name : undefined}
                   className={`flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'} py-2.5 rounded-xl text-sm transition-all duration-150 ${
                     isActive 
                       ? 'bg-[#eff6ff] text-[#2563eb] font-semibold shadow-2xs' 
                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium'
                   }`}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.path);
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <Icon size={19} className={isActive ? 'text-[#2563eb]' : 'text-slate-400'} />
                   {!isSidebarCollapsed && <span>{item.name}</span>}
@@ -219,11 +225,16 @@ export const AppLayout = () => {
                 <Link
                   key={item.name}
                   to={item.path}
+                  target="_self"
                   className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
                     isActive 
                       ? 'text-[#2563eb] font-bold' 
                       : 'text-slate-500 hover:text-slate-800 font-medium'
                   }`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.path);
+                  }}
                 >
                   <div className={`p-1 rounded-lg ${isActive ? 'bg-blue-50 text-[#2563eb]' : ''}`}>
                     <Icon size={18} className={isActive ? 'text-[#2563eb]' : 'text-slate-500'} />

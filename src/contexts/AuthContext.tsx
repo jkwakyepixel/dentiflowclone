@@ -37,8 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const data = userDoc.data();
             let finalClinicId = data.clinicId || 'demo-clinic';
             
-            // Auto-migrate old test accounts away from the shared demo-clinic
-            if (finalClinicId === 'demo-clinic') {
+            // Auto-migrate old test accounts away from the shared demo-clinic (only for admin accounts)
+            if (finalClinicId === 'demo-clinic' && (!data.role || data.role === 'admin')) {
               finalClinicId = `clinic_${user.uid}`;
               try {
                 const { updateDoc } = await import('firebase/firestore');
