@@ -8,21 +8,36 @@ import {
   Eye, 
   FileText, 
   Calendar as CalendarIcon, 
-  X,
-  Trash2,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  ClipboardList
+  X, 
+  Trash2, 
+  User, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  ClipboardList,
+  FileSpreadsheet
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Pagination } from '../components/ui/Pagination';
+import { ExportPatientsModal, type ExportModalConfig } from '../components/ui/ExportPatientsModal';
+import { exportPatientsDataExcel } from '../services/patientExport';
+import { useClinic } from '../contexts/ClinicContext';
+import { useAuth } from '../contexts/AuthContext';
+import { getInvoices } from '../services/invoiceService';
+import { getPayments } from '../services/paymentService';
+import { getAppointments } from '../services/appointmentService';
+import { getClinicalNotesForClinic } from '../services/clinicalNoteService';
 
 export default function Patients() {
   const { patients, loading, addPatient, removePatient } = usePatients();
+  const { userData } = useAuth();
+  const { clinicProfile } = useClinic();
   const navigate = useNavigate();
+  
+  const clinicId = userData?.clinicId || 'demo-clinic';
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -150,6 +165,51 @@ export default function Patients() {
     return colors[index % colors.length];
   };
 
+  const handleRunExport = async (options: ExportModalConfig) => {
+    setIsExporting(true);
+    try {
+      const targetPatients = options.scope === 'filtered' ? filteredPatients : patients.filter(p => !p.isDeleted);
+      if (targetPatients.length === 0) {
+        toast.error('No patients found to export');
+        return;
+      }
+
+      // Fetch clinic records in parallel
+      const [allInvoices, allPayments, allAppts, allClinicalNotes] = await Promise.all([
+        getInvoices(clinicId).catch(() => []),
+        getPayments(clinicId).catch(() => []),
+        getAppointments(clinicId).catch(() => []),
+        getClinicalNotesForClinic(clinicId).catch(() => [])
+      ]);
+
+      await exportPatientsDataExcel({
+        patients: targetPatients,
+        invoices: allInvoices,
+        payments: allPayments,
+        appointments: allAppts,
+        clinicalNotes: allClinicalNotes,
+        clinicName: clinicProfile.name,
+        currency: clinicProfile.currency,
+        dateFilter: options.dateFilter,
+        customStartDate: options.customStartDate,
+        customEndDate: options.customEndDate,
+        includeClinicalNotes: options.includeClinicalNotes,
+        includeInvoices: options.includeInvoices,
+        includePayments: options.includePayments,
+        includeAppointments: options.includeAppointments,
+        singlePatient: false
+      });
+
+      toast.success(`Exported ${targetPatients.length} patient dossier(s) successfully!`);
+      setIsExportModalOpen(false);
+    } catch (err) {
+      console.error('Patient export failed:', err);
+      toast.error('Failed to export patient dossiers');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[500px]">
@@ -166,13 +226,24 @@ export default function Patients() {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Patients</h1>
           <p className="text-xs text-slate-400 mt-1">{filteredPatients.length} registered patients</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          <span>Add Patient</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button 
+            type="button"
+            onClick={() => setIsExportModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors"
+            title="Export patient records with clinical notes, invoices, and payments arranged patient-by-patient"
+          >
+            <FileSpreadsheet size={16} />
+            <span>Export Patients</span>
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors"
+          >
+            <Plus size={16} />
+            <span>Add Patient</span>
+          </button>
+        </div>
       </div>
 
       {/* Search & Gender Filter Bar */}
@@ -652,6 +723,15 @@ export default function Patients() {
           </div>
         </div>
       )}
+      {/* Export Patients Modal */}
+      <ExportPatientsModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleRunExport}
+        totalPatientsCount={patients.filter(p => !p.isDeleted).length}
+        filteredPatientsCount={filteredPatients.length}
+        isFiltered={filteredPatients.length !== patients.filter(p => !p.isDeleted).length}
+      />
     </div>
   );
 }

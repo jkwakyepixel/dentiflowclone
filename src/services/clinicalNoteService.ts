@@ -3,6 +3,7 @@ import {
   doc, 
   query, 
   where, 
+  getDocs,
   addDoc, 
   updateDoc, 
   deleteDoc,
@@ -56,4 +57,51 @@ export const updateClinicalNote = async (id: string, data: Partial<ClinicalNote>
 export const deleteClinicalNote = async (id: string): Promise<void> => {
   const docRef = doc(db, COLLECTION_NAME, id);
   await deleteDoc(docRef);
+};
+
+export const getClinicalNotesForClinic = async (clinicId: string): Promise<ClinicalNote[]> => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('clinicId', '==', clinicId)
+    );
+    const snapshot = await getDocs(q);
+    const notes: ClinicalNote[] = [];
+    snapshot.forEach((docSnap) => {
+      notes.push({ id: docSnap.id, ...docSnap.data() } as ClinicalNote);
+    });
+    notes.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || (a.date ? new Date(a.date).getTime() : 0);
+      const timeB = b.createdAt?.toMillis?.() || (b.date ? new Date(b.date).getTime() : 0);
+      return timeB - timeA;
+    });
+    return notes;
+  } catch (error) {
+    console.error('Error fetching clinical notes for clinic:', error);
+    return [];
+  }
+};
+
+export const getClinicalNotesByPatient = async (clinicId: string, patientId: string): Promise<ClinicalNote[]> => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('clinicId', '==', clinicId),
+      where('patientId', '==', patientId)
+    );
+    const snapshot = await getDocs(q);
+    const notes: ClinicalNote[] = [];
+    snapshot.forEach((docSnap) => {
+      notes.push({ id: docSnap.id, ...docSnap.data() } as ClinicalNote);
+    });
+    notes.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis?.() || (a.date ? new Date(a.date).getTime() : 0);
+      const timeB = b.createdAt?.toMillis?.() || (b.date ? new Date(b.date).getTime() : 0);
+      return timeB - timeA;
+    });
+    return notes;
+  } catch (error) {
+    console.error('Error fetching clinical notes for patient:', error);
+    return [];
+  }
 };

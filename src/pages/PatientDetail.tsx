@@ -15,8 +15,9 @@ import { useServices } from '../hooks/useServices';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { PatientXRays } from '../components/ui/PatientXRays';
 import { 
-  ArrowLeft, Phone, Mail, Cake, CalendarIcon, FileText, CreditCard, Trash2, Plus, X, Edit2
+  ArrowLeft, Phone, Mail, Cake, CalendarIcon, FileText, CreditCard, Trash2, Plus, X, Edit2, FileSpreadsheet
 } from 'lucide-react';
+import { exportPatientsDataExcel } from '../services/patientExport';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -100,6 +101,30 @@ export default function PatientDetail() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Mobile Money' | 'Card' | 'Bank Transfer'>('Cash');
   const [paymentRef, setPaymentRef] = useState('');
+  const [isExportingDossier, setIsExportingDossier] = useState(false);
+
+  const handleExportDossier = async () => {
+    if (!patient) return;
+    setIsExportingDossier(true);
+    try {
+      await exportPatientsDataExcel({
+        patients: [patient],
+        invoices: patientInvoices,
+        payments: patientPayments,
+        appointments: patientAppointments,
+        clinicalNotes: notesList,
+        clinicName: clinicProfile.name,
+        currency: clinicProfile.currency,
+        singlePatient: true
+      });
+      toast.success('Patient dossier exported successfully');
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Failed to export patient dossier');
+    } finally {
+      setIsExportingDossier(false);
+    }
+  };
 
   const clinicId = userData?.clinicId || 'demo-clinic';
 
@@ -388,6 +413,21 @@ export default function PatientDetail() {
           >
             <CreditCard size={14} />
             <span>Record Payment</span>
+          </button>
+
+          <button 
+            type="button"
+            disabled={isExportingDossier}
+            onClick={handleExportDossier}
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors disabled:opacity-50"
+            title="Download full patient history (invoices, payments, clinical notes, appointments) to Excel"
+          >
+            {isExportingDossier ? (
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <FileSpreadsheet size={14} />
+            )}
+            <span>{isExportingDossier ? 'Exporting...' : 'Export Dossier'}</span>
           </button>
         </div>
       </div>

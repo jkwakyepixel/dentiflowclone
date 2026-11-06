@@ -5,6 +5,7 @@ import { useServices } from '../hooks/useServices';
 import { useUsers } from '../hooks/useUsers';
 import { usePermissions } from '../hooks/usePermissions';
 import { DEFAULT_OPERATIONS } from '../utils/seedOperations';
+import { cleanDoctorEntry, formatDoctorName } from '../utils/doctorUtils';
 import { PERMISSION_LABELS, DEFAULT_ROLE_PERMISSIONS, type AppPermission, type RoleType } from '../config/permissions';
 import type { ClinicService } from '../types';
 import { 
@@ -104,7 +105,23 @@ export default function Settings() {
   const [logoPreview, setLogoPreview] = useState<string | null>(clinicProfile.logo);
   const [invoiceSignatoryName, setInvoiceSignatoryName] = useState(clinicProfile.invoiceSignatoryName || '');
   const [invoiceSignatoryRole, setInvoiceSignatoryRole] = useState(clinicProfile.invoiceSignatoryRole || '');
-  const [doctorsList, setDoctorsList] = useState((clinicProfile.doctors || []).join('\n'));
+  
+  // Sanitize doctors list so malformed entries like "Dr." don't populate
+  const getInitialDoctorsText = (docs?: string[]) => {
+    const valid = (docs || [])
+      .map(d => cleanDoctorEntry(d))
+      .filter((d): d is string => Boolean(d));
+    if (valid.length > 0) return valid.join('\n');
+    // If empty or only had invalid "Dr.", check team members for dentists
+    const teamDentists = users
+      .filter(u => u.role === 'dentist' || u.role === 'admin')
+      .map(u => cleanDoctorEntry(u.name))
+      .filter((d): d is string => Boolean(d));
+    if (teamDentists.length > 0) return Array.from(new Set(teamDentists)).join('\n');
+    return ['Dr. Sarah Smith', 'Dr. Michael Chang'].join('\n');
+  };
+
+  const [doctorsList, setDoctorsList] = useState(() => getInitialDoctorsText(clinicProfile.doctors));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New / Edit Service Modal
@@ -126,7 +143,14 @@ export default function Settings() {
     setLogoPreview(clinicProfile.logo);
     setInvoiceSignatoryName(clinicProfile.invoiceSignatoryName || '');
     setInvoiceSignatoryRole(clinicProfile.invoiceSignatoryRole || '');
-    setDoctorsList((clinicProfile.doctors || []).join('\n'));
+    
+    // Only update doctorsList if clinicProfile.doctors has entries or current list is empty
+    const sanitized = (clinicProfile.doctors || [])
+      .map(d => cleanDoctorEntry(d))
+      .filter((d): d is string => Boolean(d));
+    if (sanitized.length > 0) {
+      setDoctorsList(sanitized.join('\n'));
+    }
   }, [clinicProfile]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,7 +182,11 @@ export default function Settings() {
     e.preventDefault();
     setIsSavingProfile(true);
     try {
-      const doctorsArray = doctorsList.split('\n').map((d: string) => d.trim()).filter((d: string) => d.length > 0);
+      const doctorsArray = doctorsList
+        .split('\n')
+        .map(d => cleanDoctorEntry(d))
+        .filter((d): d is string => Boolean(d));
+
       await updateClinicProfile({
         name: clinicName.trim() || 'Bright Smile Dental Clinic',
         phone: clinicPhone.trim(),
@@ -168,7 +196,7 @@ export default function Settings() {
         currency,
         invoiceSignatoryName: invoiceSignatoryName.trim(),
         invoiceSignatoryRole: invoiceSignatoryRole.trim(),
-        doctors: doctorsArray
+        doctors: doctorsArray.length > 0 ? doctorsArray : ['Dr. Sarah Smith', 'Dr. Michael Chang']
       });
       toast.success('Clinic profile updated successfully');
     } catch (err) {
@@ -467,14 +495,40 @@ export default function Settings() {
                 </div>
 
                 <div className="pt-4 border-t border-slate-100">
-                  <h3 className="font-bold text-slate-800 mb-1 text-sm">Clinic Doctors</h3>
-                  <p className="text-slate-500 mb-3">List the doctors in your clinic (one per line). These will appear in the dropdown when booking appointments or adding admissions.</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-slate-800 text-sm">Clinic Doctors</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const teamDentists = users
+                          .filter(u => u.role === 'dentist' || u.role === 'admin')
+                          .map(u => cleanDoctorEntry(u.name))
+                          .filter((d): d is string => Boolean(d));
+                        const current = doctorsList
+                          .split('\n')
+                          .map(d => cleanDoctorEntry(d))
+                          .filter((d): d is string => Boolean(d));
+                        const merged = Array.from(new Set([...teamDentists, ...current]));
+                        if (merged.length > 0) {
+                          setDoctorsList(merged.join('\n'));
+                          toast.success('Synced doctors from team members');
+                        } else {
+                          setDoctorsList(['Dr. Sarah Smith', 'Dr. Michael Chang'].join('\n'));
+                          toast.success('Loaded default doctors');
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
+                    >
+                      + Sync from Team Members
+                    </button>
+                  </div>
+                  <p className="text-slate-500 mb-3 text-xs">List the doctors in your clinic (one per line, e.g. Dr. Kwame Mensah). These will appear in the dropdown when booking appointments or adding admissions.</p>
                   <textarea
                     rows={4}
-                    placeholder="Dr. Sarah Smith&#10;Dr. Michael Johnson"
+                    placeholder="Dr. Sarah Smith&#10;Dr. Michael Chang"
                     value={doctorsList}
                     onChange={(e) => setDoctorsList(e.target.value)}
-                    className="w-full border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y"
+                    className="w-full border border-slate-200 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-y font-medium"
                   />
                 </div>
               </div>

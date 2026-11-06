@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppointments } from '../hooks/useAppointments';
 import { useAdmissions } from '../hooks/useAdmissions';
 import { useClinic } from '../contexts/ClinicContext';
+import { useClinicDoctors } from '../hooks/useClinicDoctors';
+import { formatDoctorName, cleanDoctorEntry } from '../utils/doctorUtils';
 import { usePatients } from '../hooks/usePatients';
 import type { Admission } from '../types';
 import { 
@@ -87,6 +89,7 @@ export default function Admissions() {
   const { appointments: dbAppts, editAppointment, addAppointment, removeAppointment } = useAppointments();
   const { clinicProfile } = useClinic();
   const { patients } = usePatients();
+  const { doctors, addDoctor } = useClinicDoctors();
   
   const [admissions, setAdmissions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,11 +106,28 @@ export default function Admissions() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [patientIdInput, setPatientIdInput] = useState('');
   const [dentistInput, setDentistInput] = useState('');
+  const [isCustomDoctor, setIsCustomDoctor] = useState(false);
+  const [customDoctorInput, setCustomDoctorInput] = useState('');
   const [roomInput, setRoomInput] = useState('Surgery Room 1');
   const [startTimeInput, setStartTimeInput] = useState('2:30 PM');
   const [endTimeInput, setEndTimeInput] = useState('3:00 PM');
   const [statusInput, setStatusInput] = useState<'Waiting' | 'In Session' | 'Late'>('Waiting');
   const [saving, setSaving] = useState(false);
+
+  const handleReassignDoctor = async (item: any, newDoctor: string) => {
+    try {
+      const formatted = formatDoctorName(newDoctor);
+      if (item.isAppointment && item.id) {
+        await editAppointment(item.id, { dentist: formatted });
+      } else if (item.id) {
+        await editAdmission(item.id, { dentist: formatted });
+      }
+      setAdmissions(prev => prev.map(a => a.id === item.id ? { ...a, dentist: formatted } : a));
+      toast.success(`Assigned to ${formatted}`);
+    } catch (err) {
+      toast.error('Failed to update doctor');
+    }
+  };
 
   const clinicId = userData?.clinicId || 'demo-clinic';
   const todayDateStr = format(new Date(), 'yyyy-MM-dd');
@@ -138,7 +158,7 @@ export default function Admissions() {
         clinicId,
         patientId: a.patientId,
         patientName: a.patientName,
-        dentist: a.dentist ? (a.dentist.startsWith('Dr.') ? a.dentist : `Dr. ${a.dentist}`) : 'Unassigned',
+        dentist: formatDoctorName(a.dentist),
         room: (a as any).room || 'Surgery Room 1',
         scheduledTime: `${a.startTime}\n${a.endTime}`,
         arrivalTime: isConfirmed ? a.startTime : '',
@@ -346,6 +366,12 @@ export default function Admissions() {
 
     setSaving(true);
     try {
+      const rawDoctor = isCustomDoctor ? customDoctorInput : dentistInput;
+      const finalDentist = formatDoctorName(rawDoctor, doctors[0] || 'Dr. Sarah Smith');
+      if (isCustomDoctor && cleanDoctorEntry(customDoctorInput)) {
+        addDoctor(customDoctorInput);
+      }
+
       const newAppt: any = {
         patientId: pt.id,
         patientName: `${pt.firstName} ${pt.lastName}`,
@@ -355,7 +381,7 @@ export default function Admissions() {
         duration: 30,
         room: roomInput,
         appointmentType: 'Walk-in',
-        dentist: dentistInput.replace('Dr. ', ''),
+        dentist: finalDentist,
         notes: statusInput === 'Late' ? 'Arrived late' : statusInput === 'In Session' ? `Arrived: ${format(new Date(), 'hh:mm a')}` : 'Waiting in lobby',
         status: statusInput === 'Waiting' ? 'Arrived' : statusInput === 'In Session' ? 'Confirmed' : 'Scheduled',
         isDeleted: false
@@ -365,6 +391,9 @@ export default function Admissions() {
       toast.success(`${pt.firstName} added to waiting room & appointments`);
       setIsAddModalOpen(false);
       setPatientIdInput('');
+      setDentistInput('');
+      setIsCustomDoctor(false);
+      setCustomDoctorInput('');
     } catch (err) {
       toast.error('Failed to add admission');
     } finally {
@@ -517,7 +546,7 @@ export default function Admissions() {
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">{item.patientName}</h3>
                       <p className="text-xs text-[#0284c7] font-medium mt-0.5">
-                        {item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : 'Dr. ' + item.dentist) : 'Unassigned'} · <span className="text-slate-400 font-normal">{item.room || 'Surgery Room 1'}</span>
+                        {formatDoctorName(item.dentist)} · <span className="text-slate-400 font-normal">{item.room || 'Surgery Room 1'}</span>
                       </p>
                       {item.notes && <p className="text-[11px] text-slate-400 italic mt-0.5">{item.notes}</p>}
                     </div>
@@ -653,8 +682,18 @@ export default function Admissions() {
                 </div>
 
                 {/* Column 3: Doctor / Clinic */}
-                <div className="w-36 lg:w-44 flex-shrink-0 text-[#0284c7] font-medium truncate text-xs">
-                  {item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : 'Dr. ' + item.dentist) : 'Unassigned'}
+                <div className="w-36 lg:w-44 flex-shrink-0 text-xs">
+                  <select
+                    value={cleanDoctorEntry(item.dentist) || ''}
+                    onChange={(e) => handleReassignDoctor(item, e.target.value)}
+                    className="text-[#0284c7] font-semibold bg-transparent hover:bg-blue-50 rounded px-1.5 py-0.5 border border-transparent hover:border-blue-200 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-400 max-w-full truncate text-xs"
+                    title="Click to assign or change doctor"
+                  >
+                    <option value="" disabled>Unassigned</option>
+                    {doctors.map(doc => (
+                      <option key={doc} value={doc}>{doc}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Column 4: Room */}
@@ -838,23 +877,53 @@ export default function Admissions() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Doctor / Dentist</label>
-                <select
-                  required value={dentistInput}
-                  onChange={(e) => setDentistInput(e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                >
-                  <option value="" disabled>Select Doctor...</option> {clinicProfile?.doctors?.length ? (
-                    clinicProfile.doctors.map((doc: string) => (
-                      <option key={doc} value={doc}>{doc}</option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="Dr. Sarah Smith">Dr. Sarah Smith</option>
-                      <option value="Dr. Michael Chang">Dr. Michael Chang</option>
-                    </>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-semibold text-slate-700">Doctor / Dentist</label>
+                  {isCustomDoctor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomDoctor(false);
+                        setDentistInput(doctors[0] || 'Dr. Sarah Smith');
+                      }}
+                      className="text-xs text-blue-600 hover:underline font-semibold"
+                    >
+                      Pick from list
+                    </button>
                   )}
-                </select>
+                </div>
+                {!isCustomDoctor ? (
+                  <select
+                    required
+                    value={dentistInput || doctors[0] || ''}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setIsCustomDoctor(true);
+                        setCustomDoctorInput('');
+                      } else {
+                        setIsCustomDoctor(false);
+                        setDentistInput(e.target.value);
+                      }
+                    }}
+                    className="w-full border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-xs font-medium"
+                  >
+                    <option value="" disabled>Select Doctor...</option>
+                    {doctors.map((doc: string) => (
+                      <option key={doc} value={doc}>{doc}</option>
+                    ))}
+                    <option value="__custom__">+ Enter Custom Doctor...</option>
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Kwame Mensah"
+                    value={customDoctorInput}
+                    onChange={(e) => setCustomDoctorInput(e.target.value)}
+                    className="w-full border border-blue-300 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-xs font-medium"
+                    autoFocus
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

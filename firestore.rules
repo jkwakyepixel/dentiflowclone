@@ -59,5 +59,30 @@ service cloud.firestore {
       // Logs should be immutable
       allow update, delete: if false;
     }
+
+    // Clinical Notes collection
+    match /clinicalNotes/{noteId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Treatment Plans collection
+    match /treatmentPlans/{planId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Expenses collection
+    match /expenses/{expenseId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Admissions collection
+    match /admissions/{admissionId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
+
+    // Patient XRays collection
+    match /patient_xrays/{xrayId} {
+      allow read, write: if isSameClinic(resource.data.clinicId) || isSameClinic(request.resource.data.clinicId);
+    }
   }
 }

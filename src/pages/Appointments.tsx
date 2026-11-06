@@ -43,6 +43,8 @@ import {
 import toast from 'react-hot-toast';
 import { Pagination } from '../components/ui/Pagination';
 import { useClinic } from '../contexts/ClinicContext';
+import { useClinicDoctors } from '../hooks/useClinicDoctors';
+import { formatDoctorName, cleanDoctorEntry } from '../utils/doctorUtils';
 
 // TIME_SLOTS and CLINIC_ROOMS restored
 const TIME_SLOTS = [
@@ -94,7 +96,10 @@ export default function Appointments() {
   const [startTime, setStartTime] = useState('08:30');
   const [durationMin, setDurationMin] = useState(30);
   const [appointmentType, setAppointmentType] = useState('Consultation');
+  const { doctors, addDoctor } = useClinicDoctors();
   const [dentist, setDentist] = useState('');
+  const [isCustomDoctor, setIsCustomDoctor] = useState(false);
+  const [customDoctorInput, setCustomDoctorInput] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'Scheduled' | 'Arrived' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No Show'>('Scheduled');
   const [saving, setSaving] = useState(false);
@@ -147,6 +152,12 @@ export default function Appointments() {
     const endTime = `${endH < 10 ? '0' : ''}${endH}:${endM < 10 ? '0' : ''}${endM}`;
 
     try {
+      const rawDoctor = isCustomDoctor ? customDoctorInput : dentist;
+      const finalDentist = formatDoctorName(rawDoctor, doctors[0] || 'Dr. Sarah Smith');
+      if (isCustomDoctor && cleanDoctorEntry(customDoctorInput)) {
+        addDoctor(customDoctorInput);
+      }
+
       if (editApptId) {
         await editAppointment(editApptId, {
           patientId: selectedPatientObj?.id || 'p-gen',
@@ -157,7 +168,7 @@ export default function Appointments() {
           duration: durationMin,
           room: clinicRoom,
           appointmentType,
-          dentist,
+          dentist: finalDentist,
           notes,
           status,
         });
@@ -172,7 +183,7 @@ export default function Appointments() {
           duration: durationMin,
           room: clinicRoom,
           appointmentType,
-          dentist,
+          dentist: finalDentist,
           notes,
           status,
           isDeleted: false
@@ -182,6 +193,8 @@ export default function Appointments() {
 
       setIsModalOpen(false);
       setEditApptId(null);
+      setIsCustomDoctor(false);
+      setCustomDoctorInput('');
       
       // Reset form
       setNotes('');
@@ -666,7 +679,7 @@ export default function Appointments() {
                               </div>
                               <div>
                                 <h4 className="text-xs font-bold">{appt.patientName}</h4>
-                                <p className="text-[11px] opacity-80">{appt.appointmentType} · {appt.room || 'Surgery Room 1'} · {appt.dentist ? (appt.dentist.startsWith('Dr.') ? appt.dentist : 'Dr. ' + appt.dentist) : 'Unassigned'}</p>
+                                <p className="text-[11px] opacity-80">{appt.appointmentType} · {appt.room || 'Surgery Room 1'} · {formatDoctorName(appt.dentist)}</p>
                               </div>
                             </div>
 
@@ -720,7 +733,7 @@ export default function Appointments() {
                     <td className="py-3.5 font-bold text-slate-900">{item.patientName}</td>
                     <td className="py-3.5 text-slate-600">{item.room || 'Surgery Room 1'}</td>
                     <td className="py-3.5 text-slate-600">{item.appointmentType}</td>
-                    <td className="py-3.5 text-slate-500">{item.dentist ? (item.dentist.startsWith('Dr.') ? item.dentist : `Dr. ${item.dentist}`) : 'Unassigned'}</td>
+                    <td className="py-3.5 text-slate-500">{formatDoctorName(item.dentist)}</td>
                     <td className="py-3.5 text-slate-400 max-w-xs truncate">{item.notes || '—'}</td>
                     <td className="py-3.5 text-right whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
@@ -953,24 +966,53 @@ export default function Appointments() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 font-medium mb-1">Dentist *</label>
-                  <select
-                    required
-                    value={dentist}
-                    onChange={(e) => setDentist(e.target.value)}
-                    className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs bg-white"
-                  >
-                    <option value="" disabled>Select Doctor...</option> {clinicProfile?.doctors?.length ? (
-                      clinicProfile.doctors.map((doc: string) => (
-                        <option key={doc} value={doc}>{doc}</option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="Dr. Sarah Smith">Dr. Sarah Smith</option>
-                        <option value="Dr. Michael Chang">Dr. Michael Chang</option>
-                      </>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-400 font-medium">Dentist *</label>
+                    {isCustomDoctor && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomDoctor(false);
+                          setDentist(doctors[0] || 'Dr. Sarah Smith');
+                        }}
+                        className="text-[11px] text-blue-600 hover:underline font-medium"
+                      >
+                        Pick from list
+                      </button>
                     )}
-                  </select>
+                  </div>
+                  {!isCustomDoctor ? (
+                    <select
+                      required
+                      value={dentist || doctors[0] || ''}
+                      onChange={(e) => {
+                        if (e.target.value === '__custom__') {
+                          setIsCustomDoctor(true);
+                          setCustomDoctorInput('');
+                        } else {
+                          setIsCustomDoctor(false);
+                          setDentist(e.target.value);
+                        }
+                      }}
+                      className="w-full border border-slate-200 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs bg-white font-medium"
+                    >
+                      <option value="" disabled>Select Doctor...</option>
+                      {doctors.map((doc: string) => (
+                        <option key={doc} value={doc}>{doc}</option>
+                      ))}
+                      <option value="__custom__">+ Enter Custom Doctor...</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Dr. Kwame Mensah"
+                      value={customDoctorInput}
+                      onChange={(e) => setCustomDoctorInput(e.target.value)}
+                      className="w-full border border-blue-300 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs bg-white font-medium"
+                      autoFocus
+                    />
+                  )}
                 </div>
               </div>
 
@@ -1150,7 +1192,20 @@ export default function Appointments() {
                     setStartTime(selectedAppt.startTime);
                     setDurationMin(selectedAppt.duration || 30);
                     setAppointmentType(selectedAppt.appointmentType);
-                    setDentist(selectedAppt.dentist);
+                    const cleanDoc = cleanDoctorEntry(selectedAppt.dentist);
+                    if (cleanDoc && doctors.includes(cleanDoc)) {
+                      setDentist(cleanDoc);
+                      setIsCustomDoctor(false);
+                      setCustomDoctorInput('');
+                    } else if (cleanDoc) {
+                      setDentist('');
+                      setIsCustomDoctor(true);
+                      setCustomDoctorInput(cleanDoc);
+                    } else {
+                      setDentist(doctors[0] || 'Dr. Sarah Smith');
+                      setIsCustomDoctor(false);
+                      setCustomDoctorInput('');
+                    }
                     setNotes(selectedAppt.notes || '');
                     setStatus(selectedAppt.status as any);
                     setClinicRoom(selectedAppt.room || 'Surgery Room 1');
